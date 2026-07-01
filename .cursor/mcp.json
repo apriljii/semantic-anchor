@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "semantic-anchor": {
+      "command": "node",
+      "args": ["src/server.js"],
+      "env": {
+        "SA_CONSTRAINTS": "examples/quant/constraints.json"
+      }
+    }
+  }
+}

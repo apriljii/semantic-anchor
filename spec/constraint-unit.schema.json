@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://semantic-anchor/spec/constraint-unit.schema.json",
+  "title": "ConstraintUnit",
+  "description": "The minimal, indivisible unit of a SemanticAnchor constraint. A ConstraintUnit anchors a NAMED ENTITY REFERENCE — anything the model must not hallucinate: a field, parameter, enum, or symbol (function/method/module name) — to a verifiable contract. Atomic units are scalar references; composite entities (signatures, endpoints) are compositions of units via `members`. It constrains the REFERENCE (existence / name / shape / values / policy), never the LOGIC. Intentionally domain-agnostic: the financial field registry it was extracted from is one population of ConstraintUnits. See docs/design.md.",
+
+  "type": "object",
+  "required": ["id", "type", "provenance"],
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Canonical identifier the model should converge on. snake_case, stable.",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+
+    "kind": {
+      "type": "string",
+      "description": "What kind of named reference this unit anchors. 'field'/'param'/'enum'/'symbol' are atomic; 'signature'/'endpoint' are composite (see `members`). Orthogonal to `type` (which is the data type).",
+      "enum": ["field", "param", "enum", "symbol", "signature", "endpoint"],
+      "default": "field"
+    },
+
+    "label": {
+      "type": "string",
+      "description": "Human-readable display name (any language)."
+    },
+
+    "description": {
+      "type": "string",
+      "description": "What this entity means, in plain language."
+    },
+
+    "aliases": {
+      "type": "array",
+      "description": "Natural-language or system-specific names that should resolve to this id. This is the 'best-effort' surface: resolve() matches against these, but a miss is normal in open-world tasks and must NOT be treated as an error.",
+      "items": { "type": "string" },
+      "default": []
+    },
+
+    "type": {
+      "type": "string",
+      "description": "Primitive data type of the entity.",
+      "enum": ["string", "integer", "decimal", "boolean", "date", "datetime", "enum", "object", "array"]
+    },
+
+    "provenance": {
+      "type": "string",
+      "description": "WHERE this constraint came from. This is the core open-world extension over a static registry. 'declared' = pre-curated, stable, closed-world (the field-registry case). 'derived' = computed from the runtime environment (AST, type system, lint config, tests). 'emergent' = accumulated during a session (e.g. a user said 'keep backward compatibility' mid-task).",
+      "enum": ["declared", "derived", "emergent"]
+    },
+
+    "source": {
+      "type": "string",
+      "description": "Concrete origin for traceability. For declared: a registry name. For derived: 'typescript', 'eslint', 'pytest', etc. For emergent: 'session:<turn>'.",
+      "examples": ["registry", "typescript", "eslint", "openapi", "session:7"]
+    },
+
+    "constraints": {
+      "type": "object",
+      "description": "Domain-agnostic shape constraints — the verifiable contract. Abstracted from field-registry's `inherentRules`. NEGATIVE LIST (do NOT put here): business thresholds, cross-entity rules, time-varying policy. Those belong to a rule engine, not to a ConstraintUnit.",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "boolean", "default": false, "description": "Whether the entity must be present." },
+        "minLength": { "type": "integer", "minimum": 0, "description": "String minimum length." },
+        "maxLength": { "type": "integer", "minimum": 0, "description": "String maximum length." },
+        "length": { "type": "integer", "minimum": 0, "description": "Exact string length (minLength=maxLength=length)." },
+        "pattern": { "type": "string", "description": "Regular expression (no surrounding slashes)." },
+        "patternMessage": { "type": "string", "description": "Hint shown when pattern fails." },
+        "min": { "type": "number", "description": "Numeric lower bound (intrinsic to the type, not a business threshold)." },
+        "max": { "type": "number", "description": "Numeric upper bound (intrinsic to the type, not a business threshold)." },
+        "precision": { "type": "integer", "minimum": 0, "description": "Decimal places for numeric types." },
+        "checksum": {
+          "type": "string",
+          "enum": ["luhn", "iso7064", "isbn"],
+          "description": "Standard checksum algorithm (e.g. luhn for card numbers)."
+        },
+        "format": {
+          "type": "string",
+          "enum": ["email", "phone", "url", "uuid", "ipv4", "iso8601-date", "iso8601-datetime"],
+          "description": "Standard format shorthand; verifiers derive a concrete check from it."
+        }
+      }
+    },
+
+    "values": {
+      "type": "array",
+      "description": "Enumerated legal values (when type=enum). Abstracted from field-registry's enum service.",
+      "items": {
+        "type": "object",
+        "required": ["value"],
+        "additionalProperties": false,
+        "properties": {
+          "value": { "type": "string", "description": "Canonical enum value." },
+          "label": { "type": "string", "description": "Human-readable label." },
+          "aliases": { "type": "array", "items": { "type": "string" }, "default": [] }
+        }
+      }
+    },
+
+    "policies": {
+      "type": "array",
+      "description": "Generic, non-business policy tags that a harness can act on. Domain-agnostic: 'sensitive'/'pii' replace the registry's financial maskRule values. The harness decides what each policy enforces (e.g. masking, no-logging, immutability).",
+      "items": {
+        "type": "string",
+        "enum": ["sensitive", "pii", "secret", "immutable", "deprecated", "internal"]
+      },
+      "default": []
+    },
+
+    "mappings": {
+      "type": "array",
+      "description": "Cross-context name mappings — how this entity is named in other systems/contexts. Abstracted from field-registry's `systems`, with all financial DB specifics removed.",
+      "items": {
+        "type": "object",
+        "required": ["context", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "context": { "type": "string", "description": "The other context/system, e.g. 'legacy_api', 'graphql', 'db'." },
+          "name": { "type": "string", "description": "The name used in that context." },
+          "confidence": {
+            "type": "string",
+            "enum": ["confirmed", "high", "medium", "low"],
+            "default": "medium"
+          }
+        }
+      }
+    },
+
+    "members": {
+      "type": "array",
+      "description": "Composition for COMPOSITE entities (kind=signature/endpoint). Each member references another ConstraintUnit by id and gives its structural role. This is how a signature stays honest: it is a bag of atomic units + structure (order/role), not a magic single unit. Omit for atomic units.",
+      "items": {
+        "type": "object",
+        "required": ["role", "ref"],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Structural role of this member within the composite.",
+            "enum": ["param", "returns", "field", "body", "query", "path"]
+          },
+          "ref": {
+            "type": "string",
+            "description": "Id of the constituent ConstraintUnit.",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "position": { "type": "integer", "minimum": 0, "description": "Ordinal position (for ordered params)." },
+          "required": { "type": "boolean", "default": false }
+        }
+      }
+    }
+  }
+}

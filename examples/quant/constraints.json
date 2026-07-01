@@ -1,0 +1,110 @@
+{
+  "units": [
+    {
+      "id": "ticker",
+      "label": "Ticker Symbol",
+      "description": "Exchange-traded instrument identifier (e.g. AAPL, 600519.SH).",
+      "aliases": ["symbol", "sym", "stock", "instrument", "标的", "证券代码"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^[A-Z0-9.]{1,12}$",
+        "patternMessage": "tickers use uppercase letters, digits and dot (e.g. AAPL, 600519.SH)"
+      }
+    },
+    {
+      "id": "order_side",
+      "kind": "enum",
+      "label": "Order Side",
+      "description": "Buy or sell direction of an equity order.",
+      "aliases": ["side", "direction", "trade_side", "bs_flag", "买卖方向"],
+      "type": "enum",
+      "provenance": "declared",
+      "source": "registry",
+      "values": [
+        { "value": "buy", "label": "Buy", "aliases": ["BUY", "B", "1"] },
+        { "value": "sell", "label": "Sell", "aliases": ["SELL", "S", "2"] }
+      ]
+    },
+    {
+      "id": "order_type",
+      "kind": "enum",
+      "label": "Order Type",
+      "description": "Execution style: market, limit, or stop.",
+      "aliases": ["type", "ordType", "orderType", "订单类型"],
+      "type": "enum",
+      "provenance": "declared",
+      "source": "registry",
+      "values": [
+        { "value": "market", "label": "Market", "aliases": ["MARKET", "MKT"] },
+        { "value": "limit", "label": "Limit", "aliases": ["LIMIT", "LMT"] },
+        { "value": "stop", "label": "Stop", "aliases": ["STOP", "STP"] }
+      ]
+    },
+    {
+      "id": "quantity",
+      "label": "Order Quantity",
+      "description": "Number of shares (or lots) to trade.",
+      "aliases": ["qty", "shares", "volume", "size", "委托量", "数量"],
+      "type": "integer",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": { "required": true, "min": 1 }
+    },
+    {
+      "id": "limit_price",
+      "label": "Limit Price",
+      "description": "Price for limit orders; ignored for pure market orders.",
+      "aliases": ["price", "limitPrice", "px", "limit_px", "限价"],
+      "type": "decimal",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": { "min": 0, "precision": 4 }
+    },
+    {
+      "id": "account_id",
+      "label": "Trading Account ID",
+      "description": "Fund/trading account identifier bound to the order.",
+      "aliases": ["account", "acctId", "fund_account", "资金账号"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^ACC[0-9]{8,}$",
+        "patternMessage": "account ids look like ACC12345678"
+      },
+      "policies": ["sensitive"]
+    },
+    {
+      "id": "order_id",
+      "label": "Order ID",
+      "description": "Unique client order identifier returned on submission.",
+      "aliases": ["orderId", "clOrdId", "client_order_id", "订单号"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": { "pattern": "^ORD[0-9]{10,}$" }
+    },
+    {
+      "id": "submit_order",
+      "kind": "signature",
+      "label": "submitOrder",
+      "description": "Submits an equity order. Classic quant OMS entry point — composite of ticker, side, quantity, order type and optional limit price.",
+      "aliases": ["placeOrder", "sendOrder", "报单", "下单", "submit order"],
+      "type": "object",
+      "provenance": "derived",
+      "source": "typescript",
+      "members": [
+        { "role": "param", "ref": "ticker", "position": 0, "required": true },
+        { "role": "param", "ref": "order_side", "position": 1, "required": true },
+        { "role": "param", "ref": "quantity", "position": 2, "required": true },
+        { "role": "param", "ref": "order_type", "position": 3, "required": true },
+        { "role": "param", "ref": "limit_price", "position": 4, "required": false },
+        { "role": "returns", "ref": "order_id" }
+      ]
+    }
+  ]
+}

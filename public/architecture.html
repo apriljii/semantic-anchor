@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SemanticAnchor — 架构设计讲述</title>
+  <meta name="description" content="SemanticAnchor 引用级约束协议：架构设计完整讲述文档" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --accent: #4d6bfe;
+      --accent-soft: rgba(77, 107, 254, 0.08);
+      --anchor: #1e4d7c;
+      --anchor-soft: rgba(30, 77, 124, 0.08);
+      --border: rgba(15, 23, 42, 0.08);
+      --success: #10b981;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 32px rgba(15, 23, 42, 0.06);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sidebar-w: 240px;
+      --content-max: 760px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; scroll-padding-top: 80px; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ambient */
+    .ambient {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+      background: linear-gradient(165deg, #f5f8fd 0%, #ffffff 38%, #f0f5fc 100%);
+    }
+    .wash { position: absolute; will-change: transform; }
+    .wash-blue { mix-blend-mode: multiply; opacity: 0.62; filter: url(#wc-edge) blur(52px); }
+    .wash-b1 { width: 72vw; height: 52vh; top: -8%; right: -14%; transform: rotate(-10deg); border-radius: 42% 58% 55% 45%; background: rgba(77,107,254,0.48); }
+    .wash-b2 { width: 65vw; height: 46vh; bottom: -2%; left: -12%; transform: rotate(8deg); border-radius: 55% 45% 48% 52%; background: rgba(88,142,210,0.42); }
+    .wash-b3 { width: 58vw; height: 40vh; top: 34%; left: 2%; transform: rotate(-4deg); border-radius: 50%; background: rgba(110,162,224,0.34); opacity: 0.55; }
+    .wash-b4 { width: 52vw; height: 36vh; top: 8%; left: 38%; transform: rotate(6deg); border-radius: 48% 52% 60% 40%; background: rgba(77,107,254,0.28); opacity: 0.48; }
+    .wash-white { mix-blend-mode: normal; background: rgba(255,255,255,0.88); filter: url(#wc-edge) blur(44px); border-radius: 50%; }
+    .wash-w1 { width: 88vw; height: 52vh; top: 10%; left: 50%; transform: translateX(-50%); opacity: 0.9; }
+    .wash-w2 { width: 82vw; height: 46vh; top: 34%; left: 50%; transform: translateX(-50%); opacity: 0.85; }
+    .wash-w3 { width: 92vw; height: 42vh; bottom: 2%; left: 50%; transform: translateX(-50%); opacity: 0.82; }
+    .wash-w4 { width: 68vw; height: 36vh; top: 52%; left: 50%; transform: translateX(-50%); opacity: 0.78; }
+    .ambient::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 68% 50% at 50% 40%, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.4) 50%, transparent 100%),
+        linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.08) 100%);
+    }
+    .wc-filter { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+    /* top nav */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      height: 100%; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--anchor); font-weight: 700; font-size: 15px;
+    }
+    .nav-brand span { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+    .nav-links { display: flex; gap: 20px; list-style: none; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .nav-links a:hover { color: var(--anchor); }
+
+    /* layout */
+    .page {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 56px;
+      min-height: 100vh;
+    }
+
+    /* sidebar TOC */
+    .sidebar {
+      position: sticky; top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      padding: 28px 16px 28px 24px;
+      border-right: 1px solid var(--border);
+    }
+    .sidebar-title {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px;
+    }
+    .toc { list-style: none; }
+    .toc li { margin-bottom: 4px; }
+    .toc a {
+      display: block; padding: 6px 10px; border-radius: 8px;
+      font-size: 13px; color: var(--text-secondary); text-decoration: none;
+      line-height: 1.4; transition: all 0.12s;
+    }
+    .toc a:hover { background: var(--anchor-soft); color: var(--anchor); }
+    .toc a.active { background: var(--anchor-soft); color: var(--anchor); font-weight: 600; }
+    .toc-sub { list-style: none; padding-left: 10px; margin: 2px 0 6px; }
+    .toc-sub a { font-size: 12px; padding: 4px 10px 4px 14px; color: var(--text-muted); }
+    .act-divider {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); padding: 14px 10px 6px; margin-top: 8px;
+    }
+    .act-divider:first-child { margin-top: 0; padding-top: 0; }
+
+    /* main content */
+    .content { padding: 40px 48px 80px 40px; max-width: calc(var(--content-max) + 80px); }
+
+    /* typography */
+    .doc-header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+    .doc-tag {
+      display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+      padding: 4px 10px; border-radius: 6px; margin-bottom: 16px;
+    }
+    .doc-header h1 {
+      font-size: 2rem; font-weight: 700; letter-spacing: -0.03em;
+      color: var(--anchor); line-height: 1.2; margin-bottom: 12px;
+    }
+    .doc-header .subtitle { font-size: 16px; color: var(--text-secondary); max-width: 560px; }
+    .doc-meta { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+
+    section { margin-bottom: 56px; scroll-margin-top: 72px; }
+    .sec-num {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+    }
+    section h2 {
+      font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--anchor); margin-bottom: 16px; line-height: 1.3;
+    }
+    section h3 {
+      font-size: 1.05rem; font-weight: 600; color: var(--text);
+      margin: 28px 0 12px;
+    }
+    section p { color: var(--text-secondary); margin-bottom: 14px; }
+    section ul, section ol { color: var(--text-secondary); margin: 0 0 16px 20px; }
+    section li { margin-bottom: 6px; }
+
+    /* callout */
+    .callout {
+      background: var(--anchor-soft);
+      border-left: 3px solid var(--anchor);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 16px 20px; margin: 20px 0;
+    }
+    .callout p { color: var(--anchor); font-weight: 500; margin: 0; }
+    .callout-warn {
+      background: rgba(245,158,11,0.08);
+      border-left-color: var(--warn);
+    }
+    .callout-warn p { color: #92400e; }
+    .callout-success {
+      background: rgba(16,185,129,0.08);
+      border-left-color: var(--success);
+    }
+    .callout-success p { color: #065f46; }
+
+    /* tables */
+    .table-wrap { overflow-x: auto; margin: 16px 0 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+    th {
+      text-align: left; padding: 12px 16px; background: #f8fafc;
+      font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td code, th code {
+      font-family: var(--mono); font-size: 12px;
+      background: #f1f5f9; padding: 1px 6px; border-radius: 4px; color: var(--anchor);
+    }
+
+    /* diagram boxes */
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 20px 0;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .diagram pre {
+      font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+      color: var(--text); white-space: pre; margin: 0;
+    }
+
+    /* flow */
+    .flow-row {
+      display: flex; align-items: stretch; gap: 0; margin: 20px 0; flex-wrap: wrap;
+    }
+    .flow-box {
+      flex: 1; min-width: 140px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px; text-align: center;
+    }
+    .flow-box.highlight { border-color: rgba(30,77,124,0.25); background: var(--anchor-soft); }
+    .flow-box.gate { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.06); }
+    .flow-box h4 { font-size: 13px; font-weight: 600; color: var(--anchor); margin-bottom: 6px; }
+    .flow-box p { font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.5; }
+    .flow-box code { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .flow-arrow {
+      display: flex; align-items: center; padding: 0 6px;
+      color: var(--text-muted); font-size: 18px; flex-shrink: 0;
+    }
+
+    /* code block */
+    .code-block {
+      background: #0f172a; border-radius: var(--radius-sm);
+      padding: 20px 24px; overflow-x: auto; margin: 16px 0;
+    }
+    .code-block pre {
+      font-family: var(--mono); font-size: 12.5px; line-height: 1.75;
+      color: #e2e8f0; margin: 0;
+    }
+    .code-block .cm { color: #64748b; }
+    .code-block .kw { color: #93c5fd; }
+    .code-block .str { color: #6ee7b7; }
+    .code-block .key { color: #a5b4fc; }
+
+    /* tags */
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 6px; margin-right: 4px;
+    }
+    .tag-declared { background: rgba(30,77,124,0.1); color: var(--anchor); }
+    .tag-derived { background: rgba(77,107,254,0.1); color: var(--accent); }
+    .tag-emergent { background: rgba(245,158,11,0.1); color: #b45309; }
+    .tag-effort { background: var(--accent-soft); color: var(--accent); }
+    .tag-must { background: rgba(16,185,129,0.1); color: var(--success); }
+
+    /* compare 2-col */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 20px;
+    }
+    .card h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .card p { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.6; }
+    .card.yes { border-color: rgba(16,185,129,0.2); }
+    .card.no { border-color: rgba(239,68,68,0.15); }
+
+    footer {
+      margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--text-muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 32px 24px 60px; }
+      .nav-links { display: none; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .flow-row { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); justify-content: center; padding: 4px 0; }
+    }
+
+    @media print {
+      .ambient, nav, .sidebar { display: none; }
+      .page { grid-template-columns: 1fr; padding-top: 0; }
+      .content { padding: 0; max-width: 100%; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<svg class="wc-filter" aria-hidden="true"><defs>
+  <filter id="wc-edge" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="4" seed="12" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="28" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="0.8"/>
+  </filter>
+</defs></svg>
+
+<div class="ambient" aria-hidden="true">
+  <span class="wash wash-blue wash-b1"></span>
+  <span class="wash wash-blue wash-b2"></span>
+  <span class="wash wash-blue wash-b3"></span>
+  <span class="wash wash-blue wash-b4"></span>
+  <span class="wash wash-white wash-w1"></span>
+  <span class="wash wash-white wash-w2"></span>
+  <span class="wash wash-white wash-w3"></span>
+  <span class="wash wash-white wash-w4"></span>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">SemanticAnchor <span>/ 架构设计</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="#s10">术语表</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page">
+
+  <aside class="sidebar">
+    <div class="sidebar-title">目录</div>
+    <ul class="toc" id="toc">
+      <li class="act-divider">第一幕 · 为什么</li>
+      <li><a href="#s0">0. 一句话 + 边界</a></li>
+      <li><a href="#s1">1. 核心命题</a></li>
+      <li class="act-divider">第二幕 · 是什么</li>
+      <li><a href="#s2">2. 语义锚构成（总览）</a></li>
+      <li><ul class="toc-sub">
+        <li><a href="#s2-1">2.1 锚 · Canonical ID</a></li>
+        <li><a href="#s2-2">2.2 链 · Contract</a></li>
+        <li><a href="#s2-3">2.3 抛锚 · Inject</a></li>
+        <li><a href="#s2-4">2.4 绷紧 · Gate</a></li>
+      </ul></li>
+      <li class="act-divider">第三幕 · 为什么必须这样</li>
+      <li><a href="#s3">3. 封闭 vs 开放世界</a></li>
+      <li><a href="#s4">4. 多 Agent 与 bundle</a></li>
+      <li class="act-divider">第四幕 · 怎么落地</li>
+      <li><a href="#s5">5. 四动词（MCP）</a></li>
+      <li><a href="#s6">6. 走读：量化报单</a></li>
+      <li class="act-divider">第五幕 · 证明与边界</li>
+      <li><a href="#s7">7. 碰撞测试</a></li>
+      <li><a href="#s8">8. 与 Compass / LSP</a></li>
+      <li><a href="#s9">9. 设计原则 + 非目标</a></li>
+      <li><a href="#s10">10. 术语表</a></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+
+    <header class="doc-header">
+      <div class="doc-tag">Architecture · v1</div>
+      <h1>SemanticAnchor 架构设计讲述</h1>
+      <p class="subtitle">引用级约束协议 — 让 AI Agent 对「命名实体引用」的理解与生成，可控、可验证、可收敛。</p>
+      <p class="doc-meta">叙事结构：公式分解法 · 权威来源 docs/design.md</p>
+    </header>
+
+    <!-- 0 -->
+    <section id="s0">
+      <div class="sec-num">第一幕 · §0</div>
+      <h2>一句话 + 边界</h2>
+      <div class="callout">
+        <p>SemanticAnchor 是一个引用级约束协议。它让 AI Agent 在开放世界任务中，对「命名实体的引用」变得可控、可验证、可收敛。</p>
+      </div>
+      <div class="grid-2">
+        <div class="card yes"><h4>✓ 是什么</h4><p>Harness 语义约束子层；ConstraintUnit 协议 + MCP 参考实现 + 碰撞测试报告。</p></div>
+        <div class="card no"><h4>✗ 不是什么</h4><p>不是字段字典、低代码、Compass 开源版、项目级 Harness。</p></div>
+      </div>
+    </section>
+
+    <!-- 1 -->
+    <section id="s1">
+      <div class="sec-num">第一幕 · §1</div>
+      <h2>核心命题</h2>
+      <div class="callout callout-success">
+        <p>AI 生成代码时，最不可控的不是语法，是语义。语义可控的最小化工程手段，是结构化契约，而不是 Prompt。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>错误类型</th><th>例子</th><th>现状</th></tr></thead>
+          <tbody>
+            <tr><td>语法错误</td><td>括号不匹配、类型不匹配</td><td>编译器 / LSP 已解决 ✓</td></tr>
+            <tr><td><strong>语义错误</strong></td><td><code>sym</code> 代替 <code>ticker</code>；side 写成 <code>long</code>；幻觉 OMS 函数</td><td><strong>没人拦 ✗</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Prompt 是概率性软约束。结构化契约是工程性硬约束——可解析、可注入、<strong>被验证</strong>。</p>
+    </section>
+
+    <!-- 2 overview -->
+    <section id="s2">
+      <div class="sec-num">第二幕 · §2</div>
+      <h2>语义锚的构成（总览）</h2>
+      <p>全文主轴：<strong>语义锚 = 锚 + 链 + 抛锚 + 绷紧</strong>。§2.1–2.4 逐块讲完；读完本节即可独立解释 SemanticAnchor 是什么。</p>
+      <div class="diagram"><pre>
+  锚（Anchor）          链（Contract）           抛锚（Inject）         绷紧（Gate）
+
+  Canonical ID    +   Verifiable Contract   +   resolve / bind    +   verify / feedback
+  规范名「钉」          形状/枚举/策略            best-effort 注入        must-have 守门
+      │                      │                      │                      │
+      └──────────────────────┴──────────────────────┴──────────────────────┘
+                                    = 语义锚（Semantic Anchor）
+      </pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>构成</th><th>回答</th><th>性质</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#s2-1">2.1 锚</a></td><td>约束<strong>什么</strong></td><td>核心对象</td></tr>
+            <tr><td><a href="#s2-2">2.2 链</a></td><td>契约<strong>长什么样</strong></td><td>ConstraintUnit</td></tr>
+            <tr><td><a href="#s2-3">2.3 抛锚</a></td><td>事前<strong>怎么进 context</strong></td><td><span class="tag tag-effort">best-effort</span></td></tr>
+            <tr><td><a href="#s2-4">2.4 绷紧</a></td><td>事后<strong>怎么裁决</strong></td><td><span class="tag tag-must">must-have</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn">
+        <p>没有 verify，就没有「锚」，只有「建议」。注入是优化，守门是保证。</p>
+      </div>
+    </section>
+
+    <!-- 2.1 -->
+    <section id="s2-1">
+      <div class="sec-num">§2.1</div>
+      <h2>锚 · Canonical ID</h2>
+      <p>约束对象 = <strong>命名实体的引用</strong>。模型从意图到实现的每一步绑定，都是语义幻觉的入口。</p>
+      <div class="diagram"><pre>
+意图空间                          实现空间
+─────────────────────────────────────────────────────────────
+"标的代码"            ──绑定──▶   ticker : string, pattern=^[A-Z0-9.]+$
+"买卖方向"            ──绑定──▶   order_side : enum[buy|sell]
+"限价报单"            ──绑定──▶   submitOrder(ticker, side, qty, ...) -> order_id
+      </pre></div>
+      <h3>引用谱系（kind）</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>kind</th><th>量化例子</th><th>类型</th></tr></thead>
+          <tbody>
+            <tr><td><code>field</code></td><td><code>ticker</code></td><td>原子</td></tr>
+            <tr><td><code>param</code></td><td><code>quantity</code></td><td>原子</td></tr>
+            <tr><td><code>enum</code></td><td><code>order_side</code></td><td>原子</td></tr>
+            <tr><td><code>symbol</code></td><td><code>submitOrder</code></td><td>原子</td></tr>
+            <tr><td><code>signature</code></td><td><code>submitOrder(...)</code></td><td>复合</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>窄腰原则</h3>
+      <div class="grid-2">
+        <div class="card yes"><h4>✓ 约束引用</h4><p>存不存在 · 叫什么 · 类型/形状/合法值 · 跨上下文映射</p></div>
+        <div class="card no"><h4>✗ 不约束逻辑</h4><p>撮合算法 · 控制流 · 架构决策 · 函数内部算不算对</p></div>
+      </div>
+      <h3>在 Harness 中的位置</h3>
+      <div class="diagram"><pre>
+┌─────────────────────────────────────────────┐
+│  项目级 Harness（Claude Code 等）               │  repo / shell / test / loop
+│  ┌───────────────────────────────────────┐  │
+│  │  SemanticAnchor（语义约束子层）             │  │  resolve / bind / verify
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+      </pre></div>
+    </section>
+
+    <!-- 2.2 -->
+    <section id="s2-2">
+      <div class="sec-num">§2.2</div>
+      <h2>链 · Verifiable Contract</h2>
+      <p><strong>ConstraintUnit</strong> 把命名引用绑到可验证契约上。协议 Schema 规定「标准长什么样」；实例数据是「某条标准的具体内容」。</p>
+      <h3>三种 Schema — 必须分清</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>名称</th><th>文件</th><th>在本项目</th></tr></thead>
+          <tbody>
+            <tr><td><strong>协议 Schema</strong></td><td><code>constraint-unit.schema.json</code></td><td>✅ 元规范</td></tr>
+            <tr><td><strong>约束实例</strong></td><td><code>examples/quant/constraints.json</code></td><td>✅ 数据</td></tr>
+            <tr><td><strong>Compass 业务 Schema</strong></td><td>page/ui/api…</td><td>❌ Non-Goal</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block"><pre>{
+  <span class="key">"id"</span>: <span class="str">"ticker"</span>,
+  <span class="key">"kind"</span>: <span class="str">"field"</span>,
+  <span class="key">"aliases"</span>: [<span class="str">"symbol"</span>, <span class="str">"sym"</span>, <span class="str">"标的"</span>],
+  <span class="key">"type"</span>: <span class="str">"string"</span>,
+  <span class="key">"provenance"</span>: <span class="str">"declared"</span>,
+  <span class="key">"constraints"</span>: { <span class="key">"pattern"</span>: <span class="str">"^[A-Z0-9.]{1,12}$"</span> }
+}</pre></div>
+      <h3>provenance（约束从哪来）</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>provenance</th><th>来源</th><th>例子</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag tag-declared">declared</span></td><td>人工策展</td><td>户口簿、OpenAPI、命名规范</td></tr>
+            <tr><td><span class="tag tag-derived">derived</span></td><td>项目空间派生</td><td>TS 类型、LSP 符号表</td></tr>
+            <tr><td><span class="tag tag-emergent">emergent</span></td><td>会话累积</td><td>「保持 API 向后兼容」</td></tr>
+            <tr><td>—</td><td>无标准</td><td>→ unresolved / unverifiable，<strong>不编造</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>原子 vs 复合</h3>
+      <div class="code-block"><pre>{
+  <span class="key">"id"</span>: <span class="str">"submit_order"</span>,
+  <span class="key">"kind"</span>: <span class="str">"signature"</span>,
+  <span class="key">"members"</span>: [
+    { <span class="key">"role"</span>: <span class="str">"param"</span>, <span class="key">"ref"</span>: <span class="str">"ticker"</span> },
+    { <span class="key">"role"</span>: <span class="str">"param"</span>, <span class="key">"ref"</span>: <span class="str">"order_side"</span> },
+    { <span class="key">"role"</span>: <span class="str">"returns"</span>, <span class="key">"ref"</span>: <span class="str">"order_id"</span> }
+  ]
+}</pre></div>
+      <p><code>constraints</code> 负面清单：禁止业务阈值 · 跨实体规则 · 时变策略 → 属于 Compass 规则引擎（达层）。</p>
+    </section>
+
+    <!-- 2.3 -->
+    <section id="s2-3">
+      <div class="sec-num">§2.3</div>
+      <h2>抛锚 · Inject</h2>
+      <p>事前：检索任务相关约束 → 打包 bundle → 注入 context，提高首次正确率。</p>
+      <div class="flow-row">
+        <div class="flow-box"><h4>提取</h4><p>任务 → entity aliases</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box highlight"><h4>resolve</h4><p>别名 → 规范 id<br><code>best-effort</code></p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box highlight"><h4>bind</h4><p>打包 bundle<br>注入 context</p></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>原则</th><th>含义</th></tr></thead>
+          <tbody>
+            <tr><td>任务相关才 bind</td><td>不全库灌 context</td></tr>
+            <tr><td>resolve 允许 miss</td><td>miss → unresolved + 候选，不编造</td></tr>
+            <tr><td>检索 + 验证</td><td>不用脆弱「意图硬分类」，靠 verify 兜底</td></tr>
+            <tr><td>provenance 决定注入位</td><td>declared → system 前缀；derived/emergent → JIT</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2.4 -->
+    <section id="s2-4">
+      <div class="sec-num">§2.4</div>
+      <h2>绷紧 · Gate</h2>
+      <p>事后：验证生成物 → 结构化 feedback → 重试收敛。开放世界可靠性的<strong>压舱石</strong>。</p>
+      <div class="diagram"><pre>
+模型 act（生成 usages）
+         │
+         ▼
+   verify_usage
+         │
+    ┌────┴────┐
+  通过      违反 → feedback 回注 → retry → 收敛
+      </pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>severity</th><th>含义</th><th>处理</th></tr></thead>
+          <tbody>
+            <tr><td><code>violation</code></td><td>违反契约（枚举/格式/敏感）</td><td><strong>必须修</strong></td></tr>
+            <tr><td><code>drift</code></td><td>非规范名（sym → ticker）</td><td>应修</td></tr>
+            <tr><td><code>unverifiable</code></td><td>无约束锚定</td><td>报告，不硬失败</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>两个 ground truth：① 契约自身（deterministic）；② 运行时环境（tsc / pytest / eslint，可插拔）。LSP 是来源之一，不是替代品。</p>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <div class="sec-num">第三幕 · §3</div>
+      <h2>封闭世界 vs 开放世界</h2>
+      <p>§2 讲清了构成。<strong>本节讲为什么开放世界必须四块齐全</strong>——尤其为什么仅有 Inject（户口簿那半）不够。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>维度</th><th>户口簿（封闭）</th><th>SemanticAnchor（开放）</th></tr></thead>
+          <tbody>
+            <tr><td>输入</td><td>可枚举别名</td><td>无边界 prompt + 任意代码库</td></tr>
+            <tr><td>约束来源</td><td>策展字典</td><td>环境派生 + 会话累积</td></tr>
+            <tr><td>命中率</td><td>高；miss 是异常</td><td>低；miss 是常态</td></tr>
+            <tr><td>作用点</td><td>输入解析（resolve）</td><td><strong>行动守门</strong>（verify）</td></tr>
+            <tr><td>验证真理</td><td>协议自洽</td><td><strong>环境裁决</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>三个根本转移</h3>
+      <ol>
+        <li><strong>作用点</strong>：输入解析 → 行动守门</li>
+        <li><strong>来源</strong>：策展字典 → 环境派生</li>
+        <li><strong>验证真理</strong>：协议自洽 → 环境裁决</li>
+      </ol>
+      <div class="callout">
+        <p>户口簿是 SemanticAnchor 在封闭世界、declared-only 的退化特例。封闭世界 Inject≈保证；开放世界必须补 Gate。</p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <div class="sec-num">第三幕 · §4</div>
+      <h2>多 Agent 与 bundle 传递</h2>
+      <p>bundle 不只是省 context——它是 <strong>Planner → Coder 的标准 handoff 协议</strong>。</p>
+      <div class="diagram"><pre>
+Planner   bind_constraints(aliases)  ──▶  bundle
+Coder     读 bundle 生成 usages
+Gate      verify_usage(usages)         ──▶  feedback → Coder retry
+      </pre></div>
+      <p>没有标准 bundle，Planner 解析到的 ticker / order_side 契约在 handoff 时丢失，Coder 退回 prompt 软约束 → 语义漂移重现。</p>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <div class="sec-num">第四幕 · §5</div>
+      <h2>四动词 = 构成的 MCP 映射</h2>
+      <p>4 个工具是 §2 四块的<strong>操作化</strong>，不是另起一套概念。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>工具</th><th>对应构成</th><th>性质</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td><code>resolve</code></td><td>2.1 锚 · 解析面</td><td><span class="tag tag-effort">best-effort</span></td><td>别名 → 规范 id</td></tr>
+            <tr><td><code>get_constraint</code></td><td>2.2 链 · 读契约</td><td>查询</td><td>取完整 ConstraintUnit</td></tr>
+            <tr><td><code>bind_constraints</code></td><td>2.3 抛锚</td><td><span class="tag tag-effort">best-effort</span></td><td>打包 bundle + 注入指引</td></tr>
+            <tr><td><code>verify_usage</code></td><td>2.4 绷紧</td><td><span class="tag tag-must">must-have</span></td><td>契约 + 环境裁决 → feedback</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>户口簿 16 个工具是产品面，不进开源协议。</p>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <div class="sec-num">第四幕 · §6</div>
+      <h2>走读：量化限价报单</h2>
+      <p>任务：<em>Implement a limit buy order submission: ticker symbol, order side, quantity, and trading account id.</em></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>步骤</th><th>动作</th><th>结果</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Planner <code>bind_constraints</code></td><td>4 实体 resolved → bundle</td></tr>
+            <tr><td>2</td><td>注入</td><td>Coder 用 canonical id，消除 4 处 drift</td></tr>
+            <tr><td>3</td><td>Coder 首次生成</td><td><code>aapl</code> / <code>long</code> / account 未 masked</td></tr>
+            <tr><td>4</td><td>Gate <code>verify_usage</code></td><td>3 violations → feedback</td></tr>
+            <tr><td>5</td><td>Coder retry</td><td><code>AAPL</code> / <code>buy</code> / masked:true</td></tr>
+            <tr><td>6</td><td>Gate 再次 verify</td><td>pass → <strong>0 shipped 错误</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Naive 基线（无 bind、无 loop）：同样生成物 → <strong>7 错误全部 shipped</strong>。运行 <code>npm run demo</code> 可复现。</p>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <div class="sec-num">第五幕 · §7</div>
+      <h2>碰撞测试</h2>
+      <p>开源目的：可复现的工程验证，证明三件事：</p>
+      <ol>
+        <li>结构化契约比 Prompt 更可靠</li>
+        <li>约束应在 Tool 层注入 + 行动后验证</li>
+        <li>多 Agent 之间必须有标准 bundle 协议</li>
+      </ol>
+      <div class="grid-2">
+        <div class="card no"><h4>Prompt-only baseline</h4><p style="font-size:28px;font-weight:700;color:var(--danger);margin:8px 0 4px">7</p><p>语义错误 shipped</p></div>
+        <div class="card yes"><h4>with SemanticAnchor</h4><p style="font-size:28px;font-weight:700;color:var(--success);margin:8px 0 4px">0</p><p>注入 + 守门 + 1 次 retry</p></div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <div class="sec-num">第五幕 · §8</div>
+      <h2>与 Compass / LSP / 规则引擎</h2>
+      <div class="diagram"><pre>
+Compass（私有）                         SemanticAnchor（开源）
+  field-registry（信）  ──提炼 declared──▶  约束协议 + 参考实现
+  rule-engine（达）                         + 量化 demo
+  PRD2Code（雅）
+        └──────── implements ──────────────┘
+      </pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>对比</th><th>关系</th></tr></thead>
+          <tbody>
+            <tr><td>Compass 户口簿</td><td>declared 层生产实例；~40% 迁移到协议骨架</td></tr>
+            <tr><td>LSP / type checker</td><td>verify 环境裁决来源之一</td></tr>
+            <tr><td>规则引擎（达）</td><td>业务阈值/跨实体规则 → Non-Goal</td></tr>
+            <tr><td>Prompt</td><td>软约束；7→0 证明不够</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <div class="sec-num">第五幕 · §9</div>
+      <h2>设计原则 + 非目标</h2>
+      <h3>原则</h3>
+      <ol>
+        <li>结构化契约优先于 Prompt</li>
+        <li>注入是优化，守门是保证</li>
+        <li>miss 是常态，不是错误</li>
+        <li>只约束引用，不约束逻辑（窄腰）</li>
+        <li>协议最小化 — 4 个动词</li>
+      </ol>
+      <h3>非目标</h3>
+      <div class="grid-2">
+        <div class="card no"><h4>不做</h4><p>业务字典 · 规则引擎 · 低代码 Schema · 完整 agent runtime · 16 工具产品面</p></div>
+        <div class="card yes"><h4>做</h4><p>引用级约束协议 · 4 动词 MCP · 量化碰撞测试 · 工程验证报告</p></div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <div class="sec-num">第五幕 · §10</div>
+      <h2>术语表</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>术语</th><th>定义</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ConstraintUnit</strong></td><td>锚定一个命名引用的最小可验证契约单元</td></tr>
+            <tr><td><strong>provenance</strong></td><td>declared / derived / emergent</td></tr>
+            <tr><td><strong>inject / gate</strong></td><td>事前 bind（best-effort）/ 事后 verify（must-have）</td></tr>
+            <tr><td><strong>drift</strong></td><td>有规范 id 却用非规范名</td></tr>
+            <tr><td><strong>unverifiable</strong></td><td>无约束锚定；报告但不硬失败</td></tr>
+            <tr><td><strong>窄腰</strong></td><td>只约束引用，不约束逻辑</td></tr>
+            <tr><td><strong>环境裁决</strong></td><td>编译器/测试等外部 ground truth</td></tr>
+            <tr><td><strong>闭环</strong></td><td>注入 → act → 守门 → 回注 → 收敛</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>SemanticAnchor · 架构设计讲述 · v1</span>
+      <span>
+        <a href="index.html">返回首页</a> ·
+        <a href="../docs/design.md">design.md</a> ·
+        <a href="../spec/constraint-unit.schema.json">Schema</a>
+      </span>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  const toc = document.getElementById('toc');
+  const links = toc.querySelectorAll('a');
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+  function onScroll() {
+    let current = sections[0];
+    for (const sec of sections) {
+      if (sec.getBoundingClientRect().top <= 100) current = sec;
+    }
+    links.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current.id);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>

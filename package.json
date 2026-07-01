@@ -1,0 +1,34 @@
+{
+  "name": "semantic-anchor",
+  "version": "0.1.0",
+  "description": "A reference constraint protocol for AI agents — make model output controllable in open-world tasks.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "bin": {
+    "semantic-anchor": "src/server.js"
+  },
+  "scripts": {
+    "dev": "node scripts/preview-server.js",
+    "preview": "node scripts/preview-server.js",
+    "mcp": "node src/server.js",
+    "demo": "node examples/multi-agent/demo.js",
+    "demo:naive": "node examples/multi-agent/demo.js --naive",
+    "debug:mcp": "node --inspect-brk src/server.js",
+    "debug:demo": "node --inspect-brk examples/multi-agent/demo.js",
+    "validate:spec": "node src/scripts/validate-units.js"
+  },
+  "keywords": [
+    "ai-agents",
+    "constraint-protocol",
+    "mcp",
+    "llm",
+    "harness",
+    "context-engineering",
+    "model-control"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
+}
