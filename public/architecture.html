@@ -454,13 +454,69 @@
       </div>
       <h3>在 Harness 中的位置</h3>
       <div class="diagram"><pre>
-┌─────────────────────────────────────────────┐
-│  项目级 Harness（Claude Code 等）               │  repo / shell / test / loop
-│  ┌───────────────────────────────────────┐  │
-│  │  SemanticAnchor（语义约束子层）             │  │  resolve / bind / verify
-│  └───────────────────────────────────────┘  │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  项目级 Harness（Claude Code / Cursor Agent / 自研 loop）      │
+│  · 意图 · 规划/执行 · 文件编辑 · shell · 测试 · 多轮状态        │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │  SemanticAnchor（语义约束子层）                          │  │
+│  │  resolve · get_constraint · bind · verify              │  │
+│  └────────────────────────────────────────────────────────┘  │
+│  · 环境裁决：tsc / pytest / eslint（verify 的输入，不替代）     │
+└──────────────────────────────────────────────────────────────┘
       </pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层</th><th>职责</th><th>本协议</th></tr></thead>
+          <tbody>
+            <tr><td>Harness 外层</td><td>repo、工具编排、权限、会话</td><td>❌ 不取代</td></tr>
+            <tr><td><strong>语义约束子层</strong></td><td>引用解析、契约注入、行动守门</td><td>✅ 四动词</td></tr>
+            <tr><td>环境真理</td><td>编译、类型、测试、lint</td><td>verify 输入</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>集成到 Agent 设计</h3>
+      <p>接进 Agent 不是在 system prompt 多写命名规范，而是在 loop 的<strong>两个卡口</strong>挂工具：</p>
+      <div class="diagram"><pre>
+用户意图
+    │
+    ▼
+┌─ ① 抛锚（best-effort）──────────────────────────────┐
+│  提取 aliases → bind_constraints → bundle + 注入位   │
+└────────────────────────┬────────────────────────────┘
+                         ▼
+            Coder / Executor 生成（代码、调用、字段…）
+                         │
+                         ▼
+┌─ ② 绷紧（must-have）────────────────────────────────┐
+│  抽取 usages → verify_usage → pass | feedback → retry │
+└─────────────────────────────────────────────────────┘
+      </pre></div>
+      <h3>三种接法</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>接法</th><th>适用</th><th>做法</th></tr></thead>
+          <tbody>
+            <tr><td><strong>MCP 工具</strong></td><td>Cursor / Claude Desktop</td><td>注册 semantic-anchor MCP；规划与生成后调四动词</td></tr>
+            <tr><td><strong>Harness 中间件</strong></td><td>自研 coding agent</td><td>执行前 bind；patch 落地前 verify</td></tr>
+            <tr><td><strong>进程内库</strong></td><td>Demo / CI</td><td><code>createDispatcher(store)</code> 直接调</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>单 Agent vs 多 Agent</h3>
+      <div class="diagram"><pre>
+单 Agent：  bind → act → verify → retry（同一 loop）
+
+多 Agent：  Planner --bind→ bundle --handoff→ Coder --act→ usages
+                                              ↓
+                                    Gate(verify) --feedback→ Coder
+      </pre></div>
+      <p><strong>bundle 是多 Agent 的标准 handoff 载荷</strong>——没有它，Planner 解析到的契约在 handoff 时丢失，Coder 退回 prompt 软约束。</p>
+      <h3>集成守则（Agent 设计者）</h3>
+      <div class="grid-2">
+        <div class="card yes"><h4>✓ 应做</h4><p>每次含引用的 act 落地前 verify；derived 经 extraConstraints 传入；miss 诚实返回 unresolved。</p></div>
+        <div class="card no"><h4>✗ 不应做</h4><p>仅靠 system prompt；跳过守门；用 SA 取代 shell/测试；把业务规则塞进 ConstraintUnit。</p></div>
+      </div>
     </section>
 
     <!-- 2.2 -->

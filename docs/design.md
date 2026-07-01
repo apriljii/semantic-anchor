@@ -113,7 +113,81 @@ field (ticker)  →  param (quantity)  →  enum (order_side)
 
 > **窄腰原则**：只管「引用」这一薄切面，不管「逻辑」。`submitOrder` 存不存在、签名是什么 → 在范围内；内部撮合逻辑对不对 → 不在范围内。
 
-**在 Harness 中的位置：** SemanticAnchor 是项目级 Harness 内的**语义约束子层**（resolve / bind / verify），不取代 repo / shell / test / loop。
+#### 在 Harness 中的位置
+
+SemanticAnchor 是**项目级 Harness 内的语义约束子层**，不是 Harness 本身：
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  项目级 Harness（Claude Code / Cursor Agent / 自研 loop）      │
+│  · 用户意图 · 规划/执行 · 文件编辑 · shell · 测试 · 多轮状态    │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │  SemanticAnchor（语义约束子层）                          │  │
+│  │  resolve · get_constraint · bind_constraints · verify   │  │
+│  └────────────────────────────────────────────────────────┘  │
+│  · 环境裁决仍由 tsc / pytest / eslint 等外部真理承担          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+| 层 | 职责 | SemanticAnchor 是否覆盖 |
+|----|------|-------------------------|
+| Harness 外层 | repo 理解、工具编排、权限、会话记忆 | ❌ 不取代 |
+| **语义约束子层** | 引用解析、契约注入、行动后守门 | ✅ 本协议 |
+| 环境真理 | 编译、类型、测试、lint | 作为 verify 的输入，不替代 |
+
+#### 集成到 Agent 设计：应该怎样接线
+
+把 SemanticAnchor 接进 Agent，**不是**在 system prompt 里多写几条命名规范，而是在 **Agent loop 的两个卡口**挂工具：
+
+```
+用户意图
+    │
+    ▼
+┌─ ① 抛锚（best-effort）────────────────────────────────────┐
+│  Planner / Orchestrator 从任务提取 aliases                  │
+│  → bind_constraints(aliases [, extraConstraints])          │
+│  → bundle + injection 指引（declared→system 前缀；derived→JIT）│
+└──────────────────────────┬───────────────────────────────┘
+                           ▼
+              Coder / Executor 生成（代码、调用、字段赋值…）
+                           │
+                           ▼
+┌─ ② 绷紧（must-have）──────────────────────────────────────┐
+│  从生成物抽取 usages → verify_usage(usages [, environment]) │
+│  → pass：Harness 继续（写文件 / 跑测试 / 提交）              │
+│  → fail：结构化 feedback 回注 → Coder 重试（有上限）          │
+└────────────────────────────────────────────────────────────┘
+```
+
+**三种常见接法：**
+
+| 接法 | 适用 | 做法 |
+|------|------|------|
+| **MCP 工具** | Cursor / Claude Desktop 等 | 注册 `semantic-anchor` MCP；Agent 在规划与生成后主动调四动词 |
+| **Harness 中间件** | 自研 coding agent | 在「执行工具前」调 `bind`，在「工具返回后 / patch 落地前」调 `verify` |
+| **进程内库** | Demo / CI 碰撞测试 | `createDispatcher(store)` 直接调，如 [`examples/multi-agent/demo.js`](../examples/multi-agent/demo.js) |
+
+**单 Agent vs 多 Agent：**
+
+```
+单 Agent：  同一 loop 内 bind → act → verify → retry
+
+多 Agent：  Planner --bind→ bundle --handoff→ Coder --act→ usages
+                                              ↓
+                                    Gate(verify) --feedback→ Coder
+```
+
+多 Agent 时 **bundle 是标准 handoff 载荷**——Planner 解析到的 `ticker` / `order_side` 契约必须结构化传递；否则 Coder 退回 prompt 软约束，漂移重现（见 §4）。
+
+**集成时 Agent 设计者应遵守：**
+
+1. **守门不可跳过** — 凡产出含命名引用（字段、枚举、符号、签名）的 act，落地前必须 `verify_usage`。
+2. **注入不可替代守门** — `bind_constraints` 提高首次正确率，不保证遵守；可靠性压在 verify。
+3. **derived 约束要喂进来** — 从 AST / OpenAPI / LSP 派生的 ConstraintUnit 通过 `extraConstraints` 传入 bind，不由协议凭空发明。
+4. **环境裁决并列** — tsc / pytest 结果可规整进 verify 的 `environment` 钩子；SemanticAnchor 统一 violation 形状，不取代测试 runner。
+5. **miss 诚实处理** — `unresolved` / `unverifiable` 不硬失败、不编造；由 Agent 决定追问用户或带风险继续。
+
+**不应做的事：** 用 SemanticAnchor 取代文件编辑、shell、测试编排；把业务规则塞进 ConstraintUnit；仅靠 system prompt 承载全部语义约束。
 
 ---
 

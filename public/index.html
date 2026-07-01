@@ -493,6 +493,23 @@
     }
     .bundle-callout strong { color: var(--anchor); }
 
+    .harness-diagram {
+      margin-top: 24px;
+      padding: 22px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .harness-diagram pre {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      white-space: pre;
+    }
+
     /* ── tool map hint ── */
     .tool-map {
       font-size: 12px;
@@ -958,6 +975,41 @@
         </table>
         <div class="bundle-callout">
           <strong>多 Agent handoff：</strong>Planner 的 <code style="font-family:var(--mono);font-size:12px">bind_constraints</code> bundle 是传给 Coder 的标准契约载体。没有它，ticker / order_side 约束在 handoff 时丢失，语义漂移重现。
+        </div>
+      </div>
+    </section>
+
+    <!-- Harness 集成 -->
+    <section id="harness">
+      <div class="wrap">
+        <span class="act-tag">集成视角</span>
+        <div class="section-label">Harness</div>
+        <h2 class="section-title">在 Harness 中的位置</h2>
+        <p class="section-desc">
+          SemanticAnchor 是项目级 Harness 内的<strong>语义约束子层</strong>——不取代文件编辑、shell、测试编排；
+          在 Agent loop 的<strong>两个卡口</strong>接线：执行前 bind，落地前 verify。
+        </p>
+        <div class="harness-diagram"><pre>用户意图
+    │
+    ▼
+  bind_constraints(aliases)          ← ① 抛锚 · best-effort
+    │
+    ▼
+  Coder / Executor 生成
+    │
+    ▼
+  verify_usage(usages)                 ← ② 绷紧 · must-have
+    │
+    ├── pass → Harness 继续（写文件 / 跑测试）
+    └── fail → feedback 回注 → 重试</pre></div>
+        <table class="mini-table" style="margin-top:24px">
+          <tr><th>接法</th><th>场景</th></tr>
+          <tr><td>MCP 工具</td><td>Cursor / Claude 注册 semantic-anchor，Agent 主动调四动词</td></tr>
+          <tr><td>Harness 中间件</td><td>自研 agent：工具执行前 bind，patch 落地前 verify</td></tr>
+          <tr><td>进程内库</td><td>Demo / CI：<code style="font-family:var(--mono);font-size:12px">createDispatcher</code> 直接调</td></tr>
+        </table>
+        <div class="bundle-callout" style="margin-top:20px">
+          完整分层图、多 Agent handoff 与集成守则见 <a href="architecture.html#s2-1" style="color:var(--accent);text-decoration:none;font-weight:500">架构讲述 §2.1</a>。
         </div>
       </div>
     </section>
