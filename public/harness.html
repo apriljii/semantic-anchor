@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SemanticAnchor — Harness 集成指南</title>
+  <meta name="description" content="Agent Harness 工程师集成指南：语义 gate 子层、两个卡口、MCP 与 Library 嵌入、constraints 与 usages。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+      --accent: #4d6bfe; --accent-soft: rgba(77,107,254,0.08);
+      --anchor: #1e4d7c; --anchor-soft: rgba(30,77,124,0.08);
+      --border: rgba(15,23,42,0.08); --success: #10b981; --danger: #ef4444;
+      --warn: #f59e0b; --radius: 14px; --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --font: 'Inter', system-ui, sans-serif; --sidebar: 220px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+    body { font-family: var(--font); background: #f8fafc; color: var(--text); line-height: 1.65; font-size: 15px; }
+    nav {
+      position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px;
+    }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 100%;
+      display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { text-decoration: none; color: var(--anchor); font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 18px; list-style: none; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .layout { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px;
+      display: grid; grid-template-columns: var(--sidebar) 1fr; gap: 40px; align-items: start; }
+    .sidebar { position: sticky; top: 72px; }
+    .sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+    .toc { list-style: none; font-size: 13px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--text-secondary); text-decoration: none; display: block; padding: 4px 0; }
+    .toc a:hover { color: var(--accent); }
+    .toc .sub { padding-left: 14px; font-size: 12px; }
+    .main { min-width: 0; max-width: 760px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+      padding: 4px 10px; border-radius: 6px; margin-bottom: 12px; }
+    h1 { font-size: 2rem; color: var(--anchor); letter-spacing: -0.03em; margin-bottom: 12px; line-height: 1.2; }
+    .lead { color: var(--text-secondary); margin-bottom: 24px; font-size: 16px; }
+    .meta { font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
+    .meta a { color: var(--accent); }
+    section { margin-bottom: 48px; scroll-margin-top: 72px; }
+    h2 { font-size: 1.35rem; color: var(--anchor); margin-bottom: 12px; letter-spacing: -0.02em; }
+    h3 { font-size: 1.05rem; color: var(--anchor); margin: 24px 0 10px; }
+    p { color: var(--text-secondary); margin-bottom: 14px; }
+    .callout {
+      padding: 16px 20px; border-radius: var(--radius); margin: 16px 0;
+      font-size: 14px; line-height: 1.65; border-left: 3px solid var(--accent);
+      background: var(--accent-soft); color: var(--text-secondary);
+    }
+    .callout strong { color: var(--anchor); }
+    .callout-warn { border-left-color: var(--warn); background: rgba(245,158,11,0.08); }
+    .callout-ok { border-left-color: var(--success); background: rgba(16,185,129,0.08); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+    .stat { background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+    .stat-num.bad { color: var(--danger); }
+    .stat-num.good { color: var(--success); }
+    .stat-num.accent { color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .card h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    .card.yes h4 { color: var(--success); }
+    .card.no h4 { color: var(--danger); }
+    .card p { font-size: 13px; margin: 0; }
+    .diagram {
+      background: #0f172a; color: #e2e8f0; border-radius: var(--radius);
+      padding: 18px 20px; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+      overflow-x: auto; margin: 16px 0; white-space: pre;
+    }
+    .code-wrap {
+      background: #0f172a; border-radius: var(--radius); overflow: hidden; margin: 14px 0;
+      box-shadow: 0 8px 32px rgba(15,23,42,0.1);
+    }
+    .code-head {
+      padding: 10px 16px; background: #1e293b; border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px; color: #94a3b8; font-family: var(--mono);
+    }
+    pre {
+      margin: 0; padding: 18px 20px; overflow-x: auto;
+      font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #e2e8f0;
+    }
+    .comment { color: #64748b; }
+    .cmd { color: #93c5fd; }
+    .flag { color: #a5b4fc; }
+    .out { color: #6ee7b7; }
+    .str { color: #6ee7b7; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; margin: 16px 0;
+    }
+    th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: #f8fafc; font-weight: 600; color: var(--text); width: 28%; }
+    td { color: var(--text-secondary); }
+    tr:last-child td, tr:last-child th { border-bottom: none; }
+    td code, p code { font-family: var(--mono); font-size: 12px; color: var(--anchor); background: var(--anchor-soft);
+      padding: 2px 6px; border-radius: 4px; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+    .pill-yes { background: rgba(16,185,129,0.12); color: #059669; }
+    .pill-no { background: rgba(239,68,68,0.1); color: var(--danger); }
+    .pill-opt { background: var(--accent-soft); color: var(--accent); }
+    .flow-bar {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 20px 0;
+      font-family: var(--mono); font-size: 12px;
+    }
+    .flow-bar span { background: #fff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 999px; color: var(--anchor); }
+    .flow-bar span.gate { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); font-weight: 600; }
+    .flow-bar .arrow { color: var(--text-muted); border: none; background: none; padding: 0; }
+    .checklist { list-style: none; margin: 12px 0; }
+    .checklist li {
+      font-size: 14px; color: var(--text-secondary); padding: 8px 0 8px 28px;
+      position: relative; border-bottom: 1px solid var(--border);
+    }
+    .checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--accent); }
+    .checklist li:last-child { border-bottom: none; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 0; flex-wrap: wrap; }
+    .tab-label {
+      font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: var(--radius) var(--radius) 0 0;
+      background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.06); border-bottom: none;
+    }
+    .tab-label.active { background: #0f172a; color: #93c5fd; }
+    footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center;
+      font-size: 13px; color: var(--text-muted); }
+    footer a { color: var(--accent); }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .stats, .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">SemanticAnchor</a>
+    <ul class="nav-links">
+      <li><a href="index.html">介绍</a></li>
+      <li><a href="harness.html" class="active">Harness 集成</a></li>
+      <li><a href="walkthrough.html">案例</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="/docs/harness-integration.md">Markdown</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">目录</div>
+    <ul class="toc">
+      <li><a href="#summary">0 · 摘要</a></li>
+      <li><a href="#position">1 · 栈内位置</a></li>
+      <li><a href="#failure">2 · Failure mode</a></li>
+      <li><a href="#loop">3 · 两个卡口</a></li>
+      <li><a href="#integrate">4 · 集成方式</a></li>
+      <li class="sub"><a href="#mcp">4.1 MCP</a></li>
+      <li class="sub"><a href="#library">4.2 Library</a></li>
+      <li class="sub"><a href="#hybrid">4.3 混合</a></li>
+      <li><a href="#constraints">5 · 约束数据</a></li>
+      <li><a href="#usages">6 · usages</a></li>
+      <li><a href="#derived">7 · derived</a></li>
+      <li><a href="#environment">8 · 环境裁决</a></li>
+      <li><a href="#checklist">9 · 检查清单</a></li>
+      <li><a href="#verify">10 · 5 分钟验证</a></li>
+      <li><a href="#faq">11 · FAQ</a></li>
+    </ul>
+  </aside>
+
+  <div class="main">
+    <span class="tag">For Harness Engineers</span>
+    <h1>Harness 集成指南</h1>
+    <p class="lead">
+      SemanticAnchor 是 <strong style="color:var(--anchor);font-weight:600">Agent Harness 内的语义约束子层</strong>——在 loop 里加 bind + verify 两个卡口，
+      拦住「能编译但引用错了」的 silent failure。不是完整 Coding Agent，不是字段字典。
+    </p>
+    <p class="meta">
+      完整 Markdown：<a href="/docs/harness-integration.md">docs/harness-integration.md</a> ·
+      MCP 宿主配置：<a href="/docs/mcp-integration.md">mcp-integration.md</a> ·
+      设计权威：<a href="/docs/design.md">design.md</a>
+    </p>
+
+    <section id="summary">
+      <h2>0 · 30 秒摘要</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num bad">9</div>
+          <div class="stat-label">Prompt-only<br>shipped 语义错误</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num good">0</div>
+          <div class="stat-label">加 semantic gate<br>1 次 retry 后</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num accent">2</div>
+          <div class="stat-label">Harness 卡口<br>bind + verify</div>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>注入是优化，守门是保证。</strong>
+        事前 <code>bind_constraints</code> 提高首次正确率（best-effort）；
+        事后 <code>verify_usage</code> 是 must-have——没有 verify，约束只是「建议」。
+      </div>
+      <div class="flow-bar">
+        <span>用户任务</span><span class="arrow">→</span>
+        <span class="gate">bind</span><span class="arrow">→</span>
+        <span>模型生成</span><span class="arrow">→</span>
+        <span class="gate">verify</span><span class="arrow">→</span>
+        <span>retry?</span><span class="arrow">→</span>
+        <span>写盘 / tsc / test</span>
+      </div>
+    </section>
+
+    <section id="position">
+      <h2>1 · 在 Harness 栈里的位置</h2>
+      <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│  项目级 Harness（orchestration · sandbox · test · loop）   │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  SemanticAnchor — 语义约束子层                       │  │
+│  │  resolve · bind_constraints · verify_usage         │  │
+│  └────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────┘
+                             ↓
+              环境裁决：tsc / LSP / pytest / E2E</div>
+      <div class="grid-2">
+        <div class="card yes">
+          <h4>✓ 是什么</h4>
+          <p>Harness 内的 semantic gate；4 动词 MCP + 参考实现；可复现工程验证报告（9→0）。</p>
+        </div>
+        <div class="card no">
+          <h4>✗ 不是什么</h4>
+          <p>完整 Agent runtime、字段字典、低代码、Compass/OpenSpec 替代品、规则引擎。</p>
+        </div>
+      </div>
+      <p>只约束<strong>引用面</strong>：命名存不存在、叫什么、类型/形状/合法值、敏感策略。不约束业务逻辑与控制流。</p>
+    </section>
+
+    <section id="failure">
+      <h2>2 · 要拦的 failure mode</h2>
+      <p>语法错误有编译器兜底。语义错误代码能跑、能编译，但<strong>引用是错的</strong>——Harness 若只有 prompt + 一次生成，这些会 silent ship。</p>
+      <table>
+        <tr><th>类型</th><th>例子</th><th>编译器</th><th>SemanticAnchor</th></tr>
+        <tr><td>命名漂移</td><td><code>sym</code> → 应为 <code>ticker</code></td><td>不管</td><td><code>DRIFT</code></td></tr>
+        <tr><td>枚举编造</td><td><code>long</code> → 应为 <code>buy</code></td><td>不管</td><td><code>ENUM</code></td></tr>
+        <tr><td>格式错</td><td><code>aapl</code> → <code>AAPL</code></td><td>不管</td><td><code>PATTERN</code></td></tr>
+        <tr><td>幻觉 API</td><td><code>placeOrder()</code> 不存在</td><td>可能 tsc</td><td><code>SYMBOL_NOT_FOUND</code></td></tr>
+        <tr><td>敏感泄露</td><td>account 明文 log</td><td>不管</td><td><code>SENSITIVE_NOT_HANDLED</code></td></tr>
+      </table>
+      <p>真实 TypeScript 产物：<a href="walkthrough.html?case=quant&step=3">walkthrough · naive → draft → fixed</a></p>
+    </section>
+
+    <section id="loop">
+      <h2>3 · Agent loop：两个卡口</h2>
+      <div class="diagram">用户任务（自然语言）
+    │
+    ▼
+┌─ 卡口 ① 事前 · bind（best-effort）──────────────────┐
+│  提取 aliases → bind_constraints                     │
+│  → bundle 注入 context（declared → system prefix）   │
+└──────────────────────────┬───────────────────────────┘
+                           ▼
+              模型生成代码 / tool calls
+                           │
+                           ▼
+┌─ 卡口 ② 事后 · verify（must-have）──────────────────┐
+│  抽取 usages → verify_usage                          │
+│  → ok：放行写盘 / commit                               │
+│  → !ok：feedback → 模型修改 → 再 verify              │
+└──────────────────────────┬───────────────────────────┘
+                           ▼
+              环境裁决（tsc / test / sandbox）</div>
+      <div class="callout callout-warn">
+        <strong>卡口 ② 不可跳过。</strong> 长 system prompt 不能替代行动后验证。
+      </div>
+      <h3>多 Agent handoff</h3>
+      <p>Planner 的 <code>bind_constraints</code> bundle 是传给 Coder 的标准契约载体。没有 bundle，handoff 时 ticker / order_side 约束丢失，语义漂移重现。</p>
+    </section>
+
+    <section id="integrate">
+      <h2>4 · 集成方式</h2>
+
+      <h3 id="mcp">4.1 方式 A · MCP（IDE / CLI Agent 宿主）</h3>
+      <p>启动 <code>src/server.js</code>（stdio），宿主在 Agent 对话中调用四工具。同一 Server 块可接 Cursor、Claude Desktop、VS Code Copilot、Windsurf 等。</p>
+      <div class="code-wrap">
+        <div class="code-head">.cursor/mcp.json · claude_desktop_config.json · …</div>
+        <pre>{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"semantic-anchor"</span>: {
+      <span class="flag">"command"</span>: <span class="out">"node"</span>,
+      <span class="flag">"args"</span>: [<span class="out">"/absolute/path/to/semantic-anchor/src/server.js"</span>],
+      <span class="flag">"env"</span>: {
+        <span class="flag">"SA_CONSTRAINTS"</span>: <span class="out">"/absolute/path/to/constraints.json"</span>
+      }
+    }
+  }
+}</pre>
+      </div>
+      <table>
+        <tr><th>工具</th><th>卡口</th><th>职责</th></tr>
+        <tr><td><code>resolve</code></td><td>①</td><td>别名 → 规范 id；miss → unresolved，不编造</td></tr>
+        <tr><td><code>get_constraint</code></td><td>①</td><td>读单个 ConstraintUnit</td></tr>
+        <tr><td><code>bind_constraints</code></td><td>①</td><td>打包 bundle + system prefix / JIT 指引</td></tr>
+        <tr><td><code>verify_usage</code></td><td>②</td><td>契约裁决 → violation / feedback</td></tr>
+      </table>
+      <p><span class="pill pill-opt">适用</span> 已有 MCP 宿主、Agent 自主调工具、快速试验。<br>
+      详表：<a href="/docs/mcp-integration.md">docs/mcp-integration.md</a> · 示例：<a href="/config/mcp/examples/">config/mcp/examples/</a></p>
+
+      <h3 id="library">4.2 方式 B · Library 嵌入（自研 Harness / CI）</h3>
+      <p>在 loop 代码里直接调中间件，<strong>Harness 强制 gate 时机</strong>，不依赖 Agent 记得调 MCP。</p>
+      <div class="code-wrap">
+        <div class="code-head">examples/harness-hook/semantic-gate.js</div>
+        <pre><span class="comment">// npm run demo:harness</span>
+<span class="flag">const</span> { createStore } = require(<span class="out">'./src/protocol/constraint-store'</span>);
+<span class="flag">const</span> { createSemanticGate } = require(<span class="out">'./examples/harness-hook/semantic-gate'</span>);
+
+<span class="flag">const</span> store = createStore();
+store.load(require(<span class="out">'./examples/quant/constraints.json'</span>));
+<span class="flag">const</span> gate = createSemanticGate(store, { maxRetries: 3 });
+
+<span class="comment">// 卡口 ①</span>
+<span class="flag">const</span> { bundle, injection } = gate.bind({
+  aliases: [<span class="out">'ticker symbol'</span>, <span class="out">'order side'</span>, <span class="out">'quantity'</span>, <span class="out">'account'</span>],
+  extraConstraints: [],
+});
+
+<span class="comment">// ... model generates → extract usages ...</span>
+
+<span class="comment">// 卡口 ②</span>
+<span class="flag">const</span> outcome = <span class="flag">await</span> gate.enforce(usages, {
+  retry: <span class="flag">async</span> (feedback, attempt) => modelFixUsages(feedback),
+});
+
+<span class="flag">if</span> (!outcome.ok) <span class="flag">throw new</span> Error(<span class="out">'semantic gate blocked write'</span>);
+<span class="comment">// 才允许 write_file / commit</span></pre>
+      </div>
+      <p><span class="pill pill-opt">适用</span> 自研 Harness、CI 守门、强控 retry、生产 loop。</p>
+      <p>底层单一事实来源：<code>src/dispatch.js</code>（MCP server 与 demo 共用）。</p>
+
+      <h3 id="hybrid">4.3 方式 C · 混合（生产常见）</h3>
+      <table>
+        <tr><th>阶段</th><th>做法</th></tr>
+        <tr><td>Planner</td><td>Harness 内 <code>gate.bind()</code>，bundle 写入 session / handoff</td></tr>
+        <tr><td>Coder</td><td>注入 bundle；生成后 Harness 强制 <code>gate.enforce()</code></td></tr>
+        <tr><td>IDE 联调</td><td>并行暴露 MCP，供人工 Agent 调试</td></tr>
+      </table>
+    </section>
+
+    <section id="constraints">
+      <h2>5 · 约束数据（<code>SA_CONSTRAINTS</code>）</h2>
+      <p><code>constraints.json</code> = <code>{ "units": [ ConstraintUnit, ... ] }</code>。格式：<a href="/spec/constraint-unit.schema.json">constraint-unit.schema.json</a>。示例：<a href="/examples/quant/constraints.json">examples/quant/constraints.json</a></p>
+      <table>
+        <tr><th>provenance</th><th>来源</th><th>放哪</th></tr>
+        <tr><td><code>declared</code></td><td>schema 编译、OpenAPI、手写户口簿</td><td><code>SA_CONSTRAINTS</code> 主文件</td></tr>
+        <tr><td><code>derived</code></td><td>TS 签名、LSP、OpenAPI 扫描</td><td><code>bind({ extraConstraints })</code></td></tr>
+        <tr><td><code>emergent</code></td><td>会话追加（「保持向后兼容」）</td><td>会话 store / register</td></tr>
+      </table>
+      <h3>有 Spec 体系时的推荐流水线</h3>
+      <div class="diagram">pm.md / spec.md  →  编译链  →  schema.json (+ api.json)
+                              ↓ transform（引用级切片）
+                         constraints.json  →  SA_CONSTRAINTS
+Apply 时 TS 扫描  →  extraConstraints（derived）</div>
+      <p>本 repo <strong>未包含</strong> Compass 编译链；可手写 constraints 或自建 transform。校验：<code>npm run validate:spec</code></p>
+    </section>
+
+    <section id="usages">
+      <h2>6 · usages：verify 的输入</h2>
+      <p><code>verify_usage</code> 消费结构化 usages，不是 raw 源码。符号调用必须 <code>"kind": "call"</code>。</p>
+      <div class="code-wrap">
+        <div class="code-head">verify_usage 输入示例</div>
+        <pre>{
+  <span class="flag">"usages"</span>: [
+    { <span class="flag">"name"</span>: <span class="str">"ticker"</span>, <span class="flag">"value"</span>: <span class="str">"AAPL"</span> },
+    { <span class="flag">"name"</span>: <span class="str">"order_side"</span>, <span class="flag">"value"</span>: <span class="str">"buy"</span> },
+    { <span class="flag">"name"</span>: <span class="str">"account_id"</span>, <span class="flag">"value"</span>: <span class="str">"ACC****5678"</span>, <span class="flag">"masked"</span>: <span class="flag">true</span> },
+    {
+      <span class="flag">"name"</span>: <span class="str">"submit_order"</span>,
+      <span class="flag">"kind"</span>: <span class="str">"call"</span>,
+      <span class="flag">"args"</span>: [
+        { <span class="flag">"name"</span>: <span class="str">"ticker"</span> },
+        { <span class="flag">"name"</span>: <span class="str">"order_side"</span> }
+      ]
+    }
+  ]
+}</pre>
+      </div>
+      <h3>生产抽取（demo 用预定义映射）</h3>
+      <table>
+        <tr><th>方式</th><th>说明</th></tr>
+        <tr><td>AST / LSP</td><td>从 TS/JS 生成物解析字段赋值、call expression</td></tr>
+        <tr><td>Agent manifest</td><td>模型输出结构化 field list（需约束输出 schema）</td></tr>
+        <tr><td>Hybrid</td><td>模型 draft + AST 校正</td></tr>
+      </table>
+      <div class="callout callout-ok">
+        本 repo demo 用 scenario 预定义 usages 保证无 API Key、100% 可复现。生产 Harness 必须补抽取层——这是集成的主要工程量之一。
+      </div>
+    </section>
+
+    <section id="derived">
+      <h2>7 · derived 约束（开放世界 API）</h2>
+      <p>静态 constraints 通常只有 declared 字段/枚举。项目内 API 签名应运行时派生后传入 bind：</p>
+      <div class="code-wrap">
+        <div class="code-head">examples/derived/scan-typescript.js · npm run demo:derived</div>
+        <pre><span class="flag">const</span> { deriveFromTypescript } = require(<span class="out">'./examples/derived/scan-typescript'</span>);
+<span class="flag">const</span> derived = deriveFromTypescript(<span class="out">'./artifacts/oms-api.ts'</span>);
+
+gate.bind({
+  aliases: [...mentioned, <span class="out">'submit order'</span>],
+  extraConstraints: derived,
+});</pre>
+      </div>
+    </section>
+
+    <section id="environment">
+      <h2>8 · 环境裁决（与 tsc 分工）</h2>
+      <table>
+        <tr><th>层</th><th>验证什么</th></tr>
+        <tr><td><code>verify_usage</code></td><td>契约：drift / enum / pattern / sensitive / symbol</td></tr>
+        <tr><td><code>environment</code></td><td>编译器、测试、lint 的 ground truth</td></tr>
+      </table>
+      <div class="code-wrap">
+        <div class="code-head">src/adapters/tsc-environment.js · npm run demo:env</div>
+        <pre>call(<span class="out">'verify_usage'</span>, {
+  usages,
+  environment: createTscAdjudicator({ diagnostics }),
+});</pre>
+      </div>
+      <p><strong>互补，不替代。</strong> tsc 不管 <code>sym</code> vs <code>ticker</code> 的语义契约。</p>
+    </section>
+
+    <section id="checklist">
+      <h2>9 · 接入检查清单</h2>
+      <h3>MVP</h3>
+      <ul class="checklist">
+        <li><code>constraints.json</code> 覆盖任务相关 field / enum</li>
+        <li>写文件前强制 <code>verify_usage</code></li>
+        <li>violation → structured feedback → 模型 retry</li>
+        <li>retry 上限（如 3 次）</li>
+        <li><code>npm run demo:harness</code> 本地跑通</li>
+      </ul>
+      <h3>生产加强</h3>
+      <ul class="checklist">
+        <li>usages 从 AST/LSP 抽取</li>
+        <li>derived 扫描 TS/OpenAPI 补 signature</li>
+        <li>Planner→Coder bundle handoff 标准化</li>
+        <li>tsc/test 接入 environment</li>
+        <li>约束变更走 schema/transform SSOT</li>
+        <li>metrics：shipped semantic errors、retry 次数、violation 码分布</li>
+      </ul>
+    </section>
+
+    <section id="verify">
+      <h2>10 · 5 分钟验证</h2>
+      <div class="code-wrap">
+        <div class="code-head">terminal</div>
+        <pre><span class="cmd">git clone</span> &lt;repo&gt; semantic-anchor && <span class="cmd">cd</span> semantic-anchor
+<span class="cmd">npm install</span>
+
+<span class="cmd">npm run demo:harness</span>    <span class="comment"># Library：bind → enforce → retry</span>
+<span class="cmd">npm run demo</span>            <span class="comment"># 碰撞测试 9 → 0</span>
+<span class="cmd">npm run demo:derived</span>    <span class="comment"># declared + derived + gate</span>
+<span class="cmd">npm test</span>                <span class="comment"># 协议单测 + 回归</span></pre>
+      </div>
+      <p>交互案例：<a href="walkthrough.html">walkthrough.html</a> · 架构深读：<a href="architecture.html">architecture.html</a></p>
+    </section>
+
+    <section id="faq">
+      <h2>11 · FAQ</h2>
+      <h3>和 LSP / type checker 什么关系？</h3>
+      <p>LSP 是 environment 来源之一。SemanticAnchor 额外覆盖契约级语义（枚举、pattern、敏感、symbol），编译器不覆盖。</p>
+      <h3>和 OpenSpec 什么关系？</h3>
+      <p>OpenSpec 管变更怎么流、测什么；SemanticAnchor 管 Apply 时引用别漂。应串联。详见 <a href="ecosystem.html">ecosystem.html</a>（可选阅读，非集成必需）。</p>
+      <h3>规则引擎要写进 ConstraintUnit 吗？</h3>
+      <p><strong>不要。</strong> 业务阈值、跨实体规则是 Non-Goal。只描述引用形状。</p>
+      <h3>MCP 还是 Library？</h3>
+      <table>
+        <tr><th>选 MCP</th><th>选 Library</th></tr>
+        <tr><td>已有 MCP 宿主、快速试验</td><td>自研 Harness、CI、强控 gate</td></tr>
+      </table>
+      <h3>verify 全 unverifiable？</h3>
+      <p>检查 usages 的 <code>name</code> 是否对齐 constraints；symbol 是否带 <code>kind: "call"</code>；store 是否有 signature 单元。</p>
+    </section>
+  </div>
+</div>
+
+<footer>
+  SemanticAnchor · Harness Integration Guide ·
+  <a href="/docs/harness-integration.md">Markdown</a> ·
+  <a href="index.html">介绍页</a>
+</footer>
+</body>
+</html>

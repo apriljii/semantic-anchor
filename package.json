@@ -12,10 +12,19 @@
     "preview": "node scripts/preview-server.js",
     "mcp": "node src/server.js",
     "demo": "node examples/multi-agent/demo.js",
+    "demo:walkthrough": "node examples/walkthrough/limit-buy.js",
+    "demo:derived": "node examples/walkthrough/limit-buy-derived.js",
+    "demo:derived:broker": "node examples/walkthrough/broker-derived.js",
+    "demo:harness": "node examples/harness-hook/demo-loop.js",
     "demo:naive": "node examples/multi-agent/demo.js --naive",
     "debug:mcp": "node --inspect-brk src/server.js",
     "debug:demo": "node --inspect-brk examples/multi-agent/demo.js",
-    "validate:spec": "node src/scripts/validate-units.js"
+    "validate:spec": "node src/scripts/validate-units.js",
+    "test": "node --test test/protocol.test.js",
+    "demo:env": "node examples/adapters/tsc-demo.js"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1"
   },
   "keywords": [
     "ai-agents",

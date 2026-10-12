@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SemanticAnchor — 生态关系图</title>
+  <meta name="description" content="OpenSpec × Compass 8 维 Schema × SemanticAnchor 分层关系与边界" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --text: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+      --accent: #4d6bfe; --accent-soft: rgba(77,107,254,0.08);
+      --anchor: #1e4d7c; --anchor-soft: rgba(30,77,124,0.08);
+      --border: rgba(15,23,42,0.08); --success: #10b981; --danger: #ef4444;
+      --warn: #f59e0b; --radius: 14px;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+    body { font-family: var(--font); background: #f8fafc; color: var(--text); line-height: 1.65; font-size: 15px; }
+    nav {
+      position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px;
+    }
+    .nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 100%;
+      display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { text-decoration: none; color: var(--anchor); font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 20px; list-style: none; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+      padding: 4px 10px; border-radius: 6px; margin-bottom: 12px; }
+    h1 { font-size: 1.85rem; color: var(--anchor); letter-spacing: -0.03em; margin-bottom: 12px; }
+    .lead { color: var(--text-secondary); max-width: 680px; margin-bottom: 32px; }
+    section { margin-bottom: 48px; scroll-margin-top: 72px; }
+    section h2 { font-size: 1.3rem; color: var(--anchor); margin-bottom: 10px; }
+    section > p { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; max-width: 720px; }
+    .callout {
+      background: var(--anchor-soft); border-left: 3px solid var(--anchor);
+      border-radius: 0 var(--radius) var(--radius) 0; padding: 16px 20px;
+      font-size: 14px; color: var(--anchor); font-weight: 500; margin: 24px 0;
+    }
+    .diagram-card {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 28px 24px; overflow-x: auto; box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    }
+    .mermaid { display: flex; justify-content: center; }
+    /* stack layers (fallback / supplement) */
+    .stack { display: flex; flex-direction: column; gap: 0; max-width: 640px; margin: 0 auto; }
+    .layer {
+      padding: 16px 20px; border: 1px solid var(--border); position: relative;
+      background: #fff; text-align: center;
+    }
+    .layer:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .layer:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+    .layer + .layer { border-top: none; }
+    .layer.highlight { background: var(--anchor-soft); border-color: rgba(30,77,124,0.25); z-index: 1; }
+    .layer .name { font-weight: 600; font-size: 14px; color: var(--anchor); }
+    .layer .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .layer-arrow { text-align: center; color: var(--text-muted); font-size: 18px; padding: 4px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff;
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    th { text-align: left; padding: 12px 16px; background: #f8fafc; font-weight: 600; border-bottom: 1px solid var(--border); }
+    td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td code, th code { font-family: var(--mono); font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--anchor); }
+    .pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-right: 4px; }
+    .pill-yes { background: rgba(16,185,129,0.12); color: #059669; }
+    .pill-partial { background: rgba(245,158,11,0.12); color: #b45309; }
+    .pill-no { background: rgba(239,68,68,0.08); color: #dc2626; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 768px) { .grid-3 { grid-template-columns: 1fr; } }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card h3 { font-size: 15px; color: var(--anchor); margin-bottom: 8px; }
+    .card p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+    .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+    .toc a {
+      font-size: 13px; color: var(--text-secondary); text-decoration: none;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; background: #fff;
+    }
+    .toc a:hover { border-color: var(--anchor); color: var(--anchor); }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">SemanticAnchor</a>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="harness.html">Harness 集成</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="walkthrough.html">示例</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+  <span class="tag">Ecosystem Map</span>
+  <h1>OpenSpec × 8 维 Schema × SemanticAnchor</h1>
+  <p class="lead">
+    三者不是替代关系。OpenSpec 管<strong>变更怎么流</strong>，8 维 Schema 管<strong>场景契约是什么</strong>，
+    SemanticAnchor 管<strong>Apply 时 Agent 生成物的引用别漂</strong>。
+  </p>
+
+  <div class="toc">
+    <a href="#stack">层叠图</a>
+    <a href="#flow">Apply 时序</a>
+    <a href="#xinyada">信达雅</a>
+    <a href="#8dim">8 维映射</a>
+    <a href="#compare">对照表</a>
+    <a href="#gap">OpenSpec 补不上的缝</a>
+  </div>
+
+  <!-- 1. Stack -->
+  <section id="stack">
+    <h2>1. 层叠关系（谁管哪一层）</h2>
+    <p>自上而下：工作流 → 领域契约 → 运行时语义守门 → 环境真理。</p>
+    <div class="diagram-card">
+      <div class="stack">
+        <div class="layer">
+          <div class="name">OpenSpec</div>
+          <div class="sub">propose → 内容闸门 → 编译闸门 → apply → archive</div>
+        </div>
+        <div class="layer-arrow">↓</div>
+        <div class="layer">
+          <div class="name">榨干 PRD + specs/*.pm.md / *.spec.md</div>
+          <div class="sub">领域 SSOT · fieldId · 规则 · 流程</div>
+        </div>
+        <div class="layer-arrow">↓</div>
+        <div class="layer">
+          <div class="name">Compass · 04_schemas（8 维 JSON）</div>
+          <div class="sub">schema / ui / api / table / query / model / rule / event</div>
+        </div>
+        <div class="layer-arrow">↓</div>
+        <div class="layer">
+          <div class="name">field-registry（信）· 户口簿</div>
+          <div class="sub">fieldId · synonyms · inherentRules · scene bundle</div>
+        </div>
+        <div class="layer-arrow">↓</div>
+        <div class="layer highlight">
+          <div class="name">SemanticAnchor（Harness 语义约束子层）</div>
+          <div class="sub">bind → act → verify → feedback · 4 MCP 动词</div>
+        </div>
+        <div class="layer-arrow">↓</div>
+        <div class="layer">
+          <div class="name">环境裁决</div>
+          <div class="sub">tsc / LSP / pytest / Gherkin E2E</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout">SemanticAnchor 不是 OpenSpec 的竞品，而是嵌在 <strong>/opsx:apply</strong> 执行路径里的子层。</div>
+  </section>
+
+  <!-- 2. Mermaid flow -->
+  <section id="flow">
+    <h2>2. Apply 阶段时序（组合用法）</h2>
+    <p>理想 Compass 全栈：OpenSpec 保证「改什么、测什么」；语义锚保证「写的时候别漂」。</p>
+    <div class="diagram-card">
+      <pre class="mermaid">
+sequenceDiagram
+  participant PM as PM / OpenSpec
+  participant Compile as 编译链 / 8维
+  participant FR as field-registry
+  participant SA as SemanticAnchor
+  participant Agent as Coder Agent
+  participant Env as 编译器 / E2E
+
+  PM->>PM: propose + 内容闸门
+  PM->>Compile: pm.md → spec.md
+  Compile->>FR: 04_schemas/*.json
+  FR->>SA: derived ConstraintUnits
+  PM->>Agent: tasks.md + spec
+  SA->>SA: bind_constraints(bundle)
+  SA->>Agent: 注入 canonical ids
+  Agent->>Agent: 生成代码
+  SA->>SA: verify_usage
+  alt violation
+    SA->>Agent: structured feedback
+    Agent->>Agent: retry
+  end
+  Agent->>Env: 提交产物
+  Env->>PM: /opsx:verify + archive
+      </pre>
+    </div>
+  </section>
+
+  <!-- 3. 信达雅 -->
+  <section id="xinyada">
+    <h2>3. Compass 信达雅 ↔ SemanticAnchor</h2>
+    <div class="diagram-card">
+      <pre class="mermaid">
+flowchart LR
+  subgraph Compass["Compass（私有 · 生产）"]
+    Xin["信 · field-registry<br/>户口簿 + resolve"]
+    Da["达 · rule-engine<br/>rule.json"]
+    Ya["雅 · PRD2Code<br/>8维 + compile"]
+  end
+  subgraph SA["SemanticAnchor（开源 · 协议）"]
+    Proto["ConstraintUnit 协议<br/>4 MCP 动词<br/>inject + gate"]
+  end
+  Xin -->|"提炼 declared + resolve"| Proto
+  Da -.->|"❌ 不迁移"| Proto
+  Ya -.->|"❌ 不迁移"| Proto
+  Xin -->|"生产 implementation"| Compass
+  Proto -->|"reference protocol"| SA
+      </pre>
+    </div>
+    <div class="grid-3" style="margin-top:20px">
+      <div class="card">
+        <h3>信 · 提炼</h3>
+        <p>inherentRules → constraints；synonyms → aliases；scene bundle → bind_constraints 雏形。</p>
+      </div>
+      <div class="card">
+        <h3>达 · 不迁</h3>
+        <p>rule.json 业务规则、工作流、跨实体阈值 — ConstraintUnit 负面清单。</p>
+      </div>
+      <div class="card">
+        <h3>雅 · 不迁</h3>
+        <p>8 维 compile、ui/model/table — OpenSpec 交付面，非 Harness 子协议。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 8 dim mapping -->
+  <section id="8dim">
+    <h2>4. 8 维 Schema → SemanticAnchor 映射</h2>
+    <p>8 维是场景全栈契约；SemanticAnchor 只取其中「引用级」切片，或从 derived 源派生。</p>
+    <table>
+      <thead>
+        <tr><th>8 维文件</th><th>与 SemanticAnchor</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>schema.json</code></td>
+          <td><span class="pill pill-yes">强相关</span></td>
+          <td>fields → ConstraintUnit（kind=field/param/enum）；最强血缘</td>
+        </tr>
+        <tr>
+          <td><code>api.json</code></td>
+          <td><span class="pill pill-partial">部分</span></td>
+          <td>endpoints → kind=endpoint/signature；不要完整 api 维</td>
+        </tr>
+        <tr>
+          <td><code>model.json</code></td>
+          <td><span class="pill pill-partial">derived 源</span></td>
+          <td>DTO/符号名可派生 symbol；不复制 model 维文件</td>
+        </tr>
+        <tr>
+          <td><code>table.json</code> / <code>query.json</code></td>
+          <td><span class="pill pill-partial">derived 源</span></td>
+          <td>列名/字段映射 → declared/derived 约束来源</td>
+        </tr>
+        <tr>
+          <td><code>ui.json</code></td>
+          <td><span class="pill pill-no">不包含</span></td>
+          <td>布局/组件 — 非引用级语义约束</td>
+        </tr>
+        <tr>
+          <td><code>rule.json</code></td>
+          <td><span class="pill pill-no">不包含</span></td>
+          <td>业务规则 — 规则引擎（达层）</td>
+        </tr>
+        <tr>
+          <td><code>event.json</code></td>
+          <td><span class="pill pill-no">不包含</span></td>
+          <td>MQ 契约 — 不在开源协议范围</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5. Compare -->
+  <section id="compare">
+    <h2>5. OpenSpec vs SemanticAnchor（是否重复？）</h2>
+    <table>
+      <thead>
+        <tr><th>维度</th><th>OpenSpec</th><th>SemanticAnchor</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>核心问题</td><td>spec 怎么存、审、归档、驱动 tasks</td><td>生成物里命名引用是否越界</td></tr>
+        <tr><td>作用时机</td><td>Apply <strong>之前</strong>（闸门）+ 读 spec</td><td>Apply <strong>之中/之后</strong>（每步 verify）</td></tr>
+        <tr><td>验证者</td><td>人审 + Gherkin E2E</td><td>契约 + 环境裁决（结构化 feedback）</td></tr>
+        <tr><td>产物</td><td>change 目录、8 维 JSON</td><td>ConstraintUnit、bundle、violation</td></tr>
+        <tr><td>与 8 维关系</td><td>编排编译产出 8 维</td><td>消费 schema/api 派生引用，不复制 8 维</td></tr>
+        <tr><td>重复吗？</td><td colspan="2" style="color:var(--anchor);font-weight:500">哲学重叠（结构化 &gt; Prompt），工程不重叠 — 应串联</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. Gap -->
+  <section id="gap">
+    <h2>6. OpenSpec 仍补不上的缝（语义锚存在理由）</h2>
+    <table>
+      <thead>
+        <tr><th>Apply 中的问题</th><th>OpenSpec</th><th>SemanticAnchor</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>spec 写 <code>ticker</code>，代码写 <code>sym</code></td><td>❌ tasks 不逐字段验</td><td>✅ drift</td></tr>
+        <tr><td>枚举 buy/sell，代码写 <code>long</code></td><td>❌</td><td>✅ enum violation</td></tr>
+        <tr><td>Planner → Coder handoff 丢约束</td><td>❌ 靠长 context</td><td>✅ bind bundle</td></tr>
+        <tr><td>幻觉 API / 错签名</td><td>❌ 除非 E2E 失败</td><td>✅ signature 锚定</td></tr>
+        <tr><td>敏感字段明文 log</td><td>❌ ui-spec 不管运行时</td><td>✅ policy + verify</td></tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin-top:20px">
+      一句话：<strong>OpenSpec 让 spec 持久且可审；SemanticAnchor 让 Agent 在写代码时守 spec 的「引用面」。</strong>
+      见 <a href="walkthrough.html" style="color:var(--anchor)">限价报单 Walkthrough</a>（7→0）。
+    </div>
+  </section>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis' },
+    sequence: { actorMargin: 60 }
+  });
+</script>
+</body>
+</html>

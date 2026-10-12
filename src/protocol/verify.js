@@ -22,24 +22,39 @@
  *                     reported but not a hard failure (this is the honest open-world stance).
  */
 
+function isSymbolUsage(u) {
+  const k = u.kind || '';
+  return u.call === true || k === 'symbol' || k === 'signature' || k === 'endpoint' || k === 'call';
+}
+
 function verify(store, args = {}) {
   const usages = Array.isArray(args.usages) ? args.usages : [];
   const violations = [];
   const unverifiable = [];
+  const symbolRegistry = store.hasSymbolRegistry();
 
   for (const u of usages) {
     const raw = u.name != null ? u.name : u.id;
     const key = store.norm(raw);
     const canonicalId = store.aliasIndex[key];
 
-    // (a) Open-world unknown: nothing anchors this. Report, don't fail.
+    // (a) Open-world unknown — unless this is a symbol call against a known registry.
     if (!canonicalId) {
-      unverifiable.push({
-        used: raw,
-        severity: 'unverifiable',
-        code: 'NO_ANCHOR',
-        message: `No declared constraint anchors "${raw}". Cannot verify; treat as unconstrained.`,
-      });
+      if (isSymbolUsage(u) && symbolRegistry) {
+        violations.push({
+          severity: 'violation',
+          used: raw,
+          code: 'SYMBOL_NOT_FOUND',
+          message: `"${raw}" is not a known symbol/signature in the constraint registry. Do not invent API entry points.`,
+        });
+      } else {
+        unverifiable.push({
+          used: raw,
+          severity: 'unverifiable',
+          code: 'NO_ANCHOR',
+          message: `No declared constraint anchors "${raw}". Cannot verify; treat as unconstrained.`,
+        });
+      }
       continue;
     }
 
@@ -55,6 +70,11 @@ function verify(store, args = {}) {
         expected: canonicalId,
         message: `"${raw}" should be the canonical id "${canonicalId}".`,
       });
+    }
+
+    // (b2) Signature/symbol existence is confirmed; optional arity check when args supplied.
+    if ((unit.kind === 'signature' || unit.kind === 'endpoint') && Array.isArray(u.args)) {
+      checkSignatureArgs(unit, u.args, store).forEach((v) => violations.push({ id: canonicalId, ...v }));
     }
 
     // (c) Contract checks against the value, if a value was produced.
@@ -141,6 +161,35 @@ function checkValue(unit, value) {
   return out;
 }
 
+/** Validate call-site arg names against signature members (when harness extracts them). */
+function checkSignatureArgs(unit, args, store) {
+  const out = [];
+  const members = (unit.members || []).filter((m) => m.role === 'param');
+  const required = members.filter((m) => m.required !== false);
+  const argNames = new Set(args.map((a) => store.norm(a.name != null ? a.name : a.id || a.ref)));
+
+  for (const m of required) {
+    const ref = m.ref;
+    if (!ref) continue;
+    const refUnit = store.get(ref);
+    const keys = new Set([store.norm(ref)]);
+    if (refUnit) {
+      keys.add(store.norm(refUnit.id));
+      for (const a of refUnit.aliases || []) keys.add(store.norm(a));
+    }
+    const present = [...keys].some((k) => argNames.has(k));
+    if (!present) {
+      out.push({
+        severity: 'violation',
+        code: 'SIGNATURE_MISSING_ARG',
+        expected: ref,
+        message: `call to "${unit.id}" missing required argument "${ref}".`,
+      });
+    }
+  }
+  return out;
+}
+
 const FORMATS = {
   email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
   phone: /^\+?[0-9][0-9\-\s]{6,18}$/,
@@ -193,4 +242,4 @@ function buildFeedback(violations, unverifiable) {
   return lines.join('\n');
 }
 
-module.exports = { verify };
+module.exports = { verify, isSymbolUsage, checkSignatureArgs, checkValue, buildFeedback };

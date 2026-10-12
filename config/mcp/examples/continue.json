@@ -1,0 +1,12 @@
+{
+  "mcpServers": [
+    {
+      "name": "semantic-anchor",
+      "command": "node",
+      "args": ["/absolute/path/to/semantic-anchor/src/server.js"],
+      "env": {
+        "SA_CONSTRAINTS": "/absolute/path/to/constraints.json"
+      }
+    }
+  ]
+}

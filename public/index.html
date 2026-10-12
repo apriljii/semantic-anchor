@@ -330,6 +330,104 @@
       flex-wrap: wrap;
     }
 
+    /* ── hero: PRD → before/after（首屏直觉） ── */
+    .hero-story {
+      width: 100%;
+      max-width: 920px;
+      margin: 36px auto 0;
+      text-align: left;
+    }
+    .hero-prd {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .hero-prd-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hero-prd p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .hero-prd p em {
+      font-style: normal;
+      color: var(--anchor);
+      font-weight: 600;
+    }
+    .hero-ba {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .hero-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .hero-panel.bad { border-color: rgba(239, 68, 68, 0.28); }
+    .hero-panel.good { border-color: rgba(16, 185, 129, 0.32); }
+    .hero-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-panel.bad .hero-panel-head {
+      background: rgba(239, 68, 68, 0.06);
+      color: var(--danger);
+    }
+    .hero-panel.good .hero-panel-head {
+      background: rgba(16, 185, 129, 0.07);
+      color: var(--success);
+    }
+    .hero-panel-head span.file {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .hero-panel pre {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.65;
+      padding: 14px 16px;
+      margin: 0;
+      color: #334155;
+      overflow-x: auto;
+      flex: 1;
+      background: #fafbfc;
+    }
+    .hero-panel pre .x { color: var(--danger); font-weight: 500; }
+    .hero-panel pre .ok { color: var(--success); font-weight: 500; }
+    .hero-panel pre .c { color: #94a3b8; }
+    .hero-one-liner {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .hero-one-liner strong { color: var(--anchor); font-weight: 600; }
+
     /* ── stats bar ── */
     .stats {
       display: grid;
@@ -340,7 +438,7 @@
       flex-shrink: 0;
     }
     .hero .stats {
-      margin-top: 48px;
+      margin-top: 28px;
     }
     .stat-card {
       background: var(--surface);
@@ -493,23 +591,6 @@
     }
     .bundle-callout strong { color: var(--anchor); }
 
-    .harness-diagram {
-      margin-top: 24px;
-      padding: 22px 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
-    .harness-diagram pre {
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.65;
-      color: var(--text-secondary);
-      white-space: pre;
-    }
-
     /* ── tool map hint ── */
     .tool-map {
       font-size: 12px;
@@ -518,6 +599,114 @@
       font-family: var(--mono);
     }
     .tool-map em { font-style: normal; color: var(--anchor); }
+
+    /* ── ConstraintUnit structure (§2.2) ── */
+    .contract-panel {
+      margin-top: 36px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    .contract-panel-head {
+      margin-bottom: 20px;
+    }
+    .contract-panel-head h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--anchor);
+      margin-bottom: 8px;
+    }
+    .contract-panel-head p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 720px;
+    }
+    .contract-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .contract-code-wrap {
+      min-width: 0;
+    }
+    .contract-code-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .contract-code-wrap .code-block {
+      margin: 0;
+      padding: 20px 22px;
+    }
+    .contract-code-wrap .code-block pre {
+      font-size: 11.5px;
+      line-height: 1.7;
+    }
+    .contract-code-wrap .code-block .key { color: #93c5fd; }
+    .contract-code-wrap .code-block .str { color: #a5f3fc; }
+    .contract-code-wrap .code-block .ann { color: #64748b; font-style: italic; }
+    .contract-annot-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .contract-annot {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      border-left: 3px solid var(--accent);
+    }
+    .contract-annot.k-provenance { border-left-color: var(--anchor); }
+    .contract-annot.k-gate { border-left-color: var(--success); }
+    .contract-annot-k {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .contract-annot.k-provenance .contract-annot-k { color: var(--anchor); }
+    .contract-annot.k-gate .contract-annot-k { color: var(--success); }
+    .contract-annot p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .contract-annot code {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--anchor);
+    }
+    .contract-foot {
+      margin-top: 18px;
+      padding: 16px 18px;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.18);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .contract-foot strong { color: var(--anchor); }
+    .contract-links {
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    .contract-links a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .contract-links a:hover { text-decoration: underline; }
 
     /* ── problem cards ── */
     .compare {
@@ -748,6 +937,75 @@
     .terminal-body .violation { color: var(--danger); }
     .terminal-body .pass { color: var(--success); }
     .terminal-body .dim { color: var(--text-muted); }
+    /* ── crash-test cases ── */
+    .case-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 700px) { .case-grid { grid-template-columns: 1fr; } }
+    .case-card {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 26px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .case-card:hover {
+      border-color: rgba(77, 107, 254, 0.25);
+      box-shadow: var(--shadow);
+    }
+    .case-card.active {
+      border-color: rgba(30, 77, 124, 0.3);
+      background: rgba(30, 77, 124, 0.04);
+      box-shadow: var(--shadow);
+    }
+    .case-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .case-tag.quant { background: var(--accent-soft); color: var(--accent); }
+    .case-tag.broker { background: rgba(30, 77, 124, 0.08); color: var(--anchor); }
+    .case-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .case-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .case-metric {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .case-metric .bad { color: var(--danger); font-weight: 600; }
+    .case-metric .good { color: var(--success); font-weight: 600; }
+    .case-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
     .terminal-body .banner {
       color: var(--text);
       font-weight: 600;
@@ -755,6 +1013,192 @@
     }
 
     /* ── quick start ── */
+    .start-callout {
+      margin-bottom: 28px;
+      padding: 16px 20px;
+      background: var(--accent-soft);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .start-callout strong { color: var(--anchor); }
+    .path-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 28px;
+    }
+    .path-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+    .path-card.path-featured {
+      border-color: rgba(77, 107, 254, 0.28);
+      box-shadow: var(--shadow-lg);
+    }
+    .path-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .path-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--anchor);
+      line-height: 1.35;
+    }
+    .path-card > p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .path-card .code-block { margin: 0; }
+    .path-card .code-block pre { font-size: 11px; padding: 14px 16px; }
+    .path-flow {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .path-flow .hl { color: var(--accent); font-weight: 500; }
+    .path-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 4px;
+    }
+    .path-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .path-links a:hover { text-decoration: underline; }
+    .start-block {
+      margin-bottom: 36px;
+    }
+    .start-block h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--anchor);
+      margin-bottom: 10px;
+    }
+    .start-block > p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.65;
+    }
+    .start-steps {
+      list-style: none;
+      counter-reset: start-step;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .start-steps > li {
+      counter-increment: start-step;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+    .start-steps > li::before {
+      content: counter(start-step);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .start-steps h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--anchor);
+      margin-bottom: 8px;
+    }
+    .start-steps p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .start-steps p:last-child { margin-bottom: 0; }
+    .start-steps .code-block { margin-top: 10px; }
+    .start-prompt {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .host-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .host-table th, .host-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .host-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text);
+      width: 22%;
+    }
+    .host-table td { color: var(--text-secondary); }
+    .host-table tr:last-child td, .host-table tr:last-child th { border-bottom: none; }
+    .host-table code {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--anchor);
+    }
+    .start-dev {
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+    }
+    .start-dev h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--anchor);
+      margin-bottom: 12px;
+    }
     .quick-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -796,11 +1240,13 @@
     @media (max-width: 768px) {
       .nav-links { display: none; }
       .hero .stats { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-      .compare, .tools-grid, .quick-grid, .compose-grid { grid-template-columns: 1fr; }
+      .compare, .tools-grid, .quick-grid, .compose-grid, .path-grid, .contract-layout, .hero-ba { grid-template-columns: 1fr; }
       .flow-steps { flex-direction: column; gap: 24px; }
       .flow-step:not(:last-child)::after { display: none; }
-      .hero { padding: 32px 0; min-height: calc(100dvh - 60px); }
-      .hero .stats { margin-top: 36px; }
+      .hero { padding: 32px 0; min-height: auto; }
+      .hero .stats { margin-top: 24px; }
+      .hero-name { font-size: clamp(2rem, 8vw, 2.75rem); }
+      .hero h1 { font-size: 1.2rem; }
     }
   </style>
 </head>
@@ -838,53 +1284,89 @@
         SemanticAnchor
       </a>
       <ul class="nav-links">
+        <li><a href="#see">看效果</a></li>
         <li><a href="#act1">为什么</a></li>
         <li><a href="#act2">构成</a></li>
-        <li><a href="#act3">地基</a></li>
-        <li><a href="#act4">落地</a></li>
-        <li><a href="#act5">证明</a></li>
-        <li><a href="architecture.html">架构</a></li>
+        <li><a href="#act4">怎么用</a></li>
+        <li><a href="walkthrough.html">分步走读</a></li>
+        <li><a href="harness.html">Harness</a></li>
         <li><a href="#start">开始</a></li>
       </ul>
-      <a class="btn btn-primary btn-sm" href="#start">开始使用</a>
+      <a class="btn btn-primary btn-sm" href="#see">看 Before / After</a>
     </div>
   </nav>
 
   <main>
-    <!-- Hero -->
-    <div class="wrap hero">
+    <!-- Hero · 首屏：PRD → 红绿代码（直觉优先，术语后置） -->
+    <div class="wrap hero" id="see">
       <div class="hero-content">
         <div class="badge">
           <span class="badge-dot"></span>
-          Reference Constraint Protocol · v0.1
+          同一段需求 · 两种生成结果
         </div>
         <p class="hero-name">SemanticAnchor</p>
-        <h1>让 AI 输出的语义<br>可控、可验证、可收敛</h1>
+        <h1>同一段需求，AI 写代码<br>左边瞎编字段，右边对照契约改对了</h1>
         <p class="hero-lead">
-          引用级约束协议，让 Agent 在开放世界任务中，
-          对「命名实体引用」的理解与生成，从 Prompt 软约束
-          升级为可解析、可注入、可验证的结构化契约。
+          语法错误有编译器；字段名、枚举、API 写错，代码还能跑——这才是 Agent 最常见的坑。
+          SemanticAnchor 在写盘前对照契约拦下来。
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#act5">
+          <a class="btn btn-primary" href="walkthrough.html">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z"/></svg>
-            运行 Demo
+            看分步走读
           </a>
-          <a class="btn btn-ghost" href="architecture.html">架构讲述</a>
+          <a class="btn btn-ghost" href="#act5">终端里再跑一遍</a>
+          <a class="btn btn-ghost" href="#start">开始接入</a>
+        </div>
+
+        <div class="hero-story">
+          <div class="hero-prd">
+            <div class="hero-prd-label">需求（人话 · 像一段 PRD）</div>
+            <p>实现限价买入报单：标的 <em>AAPL</em>，价格 <em>178.50</em>，需要标的代码、买卖方向、数量、资金账号。</p>
+          </div>
+          <div class="hero-ba" aria-label="无守门 vs 有守门 代码对比">
+            <div class="hero-panel bad">
+              <div class="hero-panel-head">
+                <span>无守门 · Prompt-only</span>
+                <span class="file">naive.ts</span>
+              </div>
+              <pre><span class="c">// 能编译、能跑，引用全错</span>
+sym: <span class="x">'aapl'</span>          <span class="c">← 应叫 ticker，且大写</span>
+side: <span class="x">'long'</span>         <span class="c">← 枚举只有 buy | sell</span>
+qty: 100                 <span class="c">← 应叫 quantity</span>
+account: 'ACC…'          <span class="c">← 应叫 account_id</span>
+omsClient.<span class="x">placeOrder</span>()   <span class="c">← API 不存在</span></pre>
+            </div>
+            <div class="hero-panel good">
+              <div class="hero-panel-head">
+                <span>有 SemanticAnchor · 对照契约</span>
+                <span class="file">fixed.ts</span>
+              </div>
+              <pre><span class="c">// 引用对齐契约后再写盘</span>
+<span class="ok">ticker</span>: 'AAPL'
+<span class="ok">order_side</span>: 'buy'
+<span class="ok">quantity</span>: 100
+<span class="ok">account_id</span>: 'ACC****5678'  <span class="c">← 脱敏</span>
+omsClient.<span class="ok">submitOrder</span>()</pre>
+            </div>
+          </div>
+          <p class="hero-one-liner">
+            <strong>10 秒结论：</strong>不是「AI 变聪明了」，是生成后对照契约改对了——左边 9 处语义错，右边 0 处。
+          </p>
         </div>
 
         <div class="stats">
           <div class="stat-card">
-            <div class="stat-value danger">7</div>
-            <div class="stat-label">Prompt-only baseline 语义错误</div>
+            <div class="stat-value danger">9</div>
+            <div class="stat-label">无守门时的语义错误</div>
           </div>
           <div class="stat-card">
             <div class="stat-value success">0</div>
-            <div class="stat-label">SemanticAnchor 收敛后错误</div>
+            <div class="stat-label">对照契约后写出的错误</div>
           </div>
           <div class="stat-card">
             <div class="stat-value accent">4</div>
-            <div class="stat-label">MCP 协议动词（最小工具面）</div>
+            <div class="stat-label">MCP 工具（接入即可用）</div>
           </div>
         </div>
       </div>
@@ -955,6 +1437,84 @@
             <div class="compose-meta"><strong>verify_usage</strong></div>
           </div>
         </div>
+
+        <div class="contract-panel" id="constraint-unit">
+          <div class="contract-panel-head">
+            <h3>结构契约 · ConstraintUnit 长什么样？</h3>
+            <p>
+              协议的灵魂是 <strong style="font-weight:600;color:var(--anchor)">ConstraintUnit</strong>——把「规范 id」绑到「可验证契约」上的一行 JSON。
+              <code style="font-family:var(--mono);font-size:12px">verify_usage</code> 不做推理，只拿生成物里的 <code style="font-family:var(--mono);font-size:12px">name</code> / <code style="font-family:var(--mono);font-size:12px">value</code> / <code style="font-family:var(--mono);font-size:12px">call</code> 与这张卡片对照。
+            </p>
+          </div>
+
+          <div class="contract-layout">
+            <div class="contract-code-wrap">
+              <div class="contract-code-label">原子 · field（来自 examples/quant/constraints.json）</div>
+              <div class="code-block">
+                <pre>{
+  <span class="key">"id"</span>: <span class="str">"ticker"</span>,              <span class="ann">// 锚：规范 id（verify 期望的名字）</span>
+  <span class="key">"kind"</span>: <span class="str">"field"</span>,
+  <span class="key">"aliases"</span>: [<span class="str">"sym"</span>, <span class="str">"symbol"</span>, <span class="str">"标的"</span>],  <span class="ann">// resolve：sym → ticker</span>
+  <span class="key">"type"</span>: <span class="str">"string"</span>,
+  <span class="key">"provenance"</span>: <span class="str">"declared"</span>,    <span class="ann">// 来源：declared / derived / emergent</span>
+  <span class="key">"constraints"</span>: {             <span class="ann">// 链：可机器验证的形状</span>
+    <span class="key">"required"</span>: true,
+    <span class="key">"pattern"</span>: <span class="str">"^[A-Z0-9.]{1,12}$"</span>
+  },
+  <span class="key">"policies"</span>: []               <span class="ann">// 策略：如 sensitive → 须 masked</span>
+}</pre>
+              </div>
+            </div>
+
+            <ul class="contract-annot-list">
+              <li class="contract-annot">
+                <div class="contract-annot-k">① id + aliases</div>
+                <p><code>resolve</code> / <code>bind</code> 用：把任务里的「标的」「sym」认成 <code>ticker</code>。<code>verify</code> 发现用了 <code>sym</code> 而非 <code>ticker</code> → <code>NON_CANONICAL_NAME</code>（drift）。</p>
+              </li>
+              <li class="contract-annot">
+                <div class="contract-annot-k">② constraints + policies</div>
+                <p><code>verify</code> 用：值 <code>aapl</code> 不符合 pattern → <code>PATTERN</code>；枚举 <code>long</code> 不在 <code>[buy,sell]</code> → <code>ENUM</code>；敏感字段未脱敏 → <code>SENSITIVE_NOT_HANDLED</code>。</p>
+              </li>
+              <li class="contract-annot k-provenance">
+                <div class="contract-annot-k">③ provenance · 谁写的？</div>
+                <p><code>declared</code> 人手 / 治理平台；<code>derived</code> 从 TS / OpenAPI 扫描；<code>emergent</code> 会话临时补。语义锚<strong>不发明</strong>标准名，只执行已有契约。</p>
+              </li>
+              <li class="contract-annot k-gate">
+                <div class="contract-annot-k">④ 只有 Contract 不够</div>
+                <p>光有这张卡片 = 户口簿（查表）。加上 <code>verify_usage</code> 闭环 = SemanticAnchor。<strong>没有 verify，就没有「锚」，只有「建议」。</strong></p>
+              </li>
+            </ul>
+          </div>
+
+          <div class="contract-code-wrap" style="margin-top:20px">
+            <div class="contract-code-label">复合 · signature（API 入口，members 引用原子 unit）</div>
+            <div class="code-block">
+              <pre>{
+  <span class="key">"id"</span>: <span class="str">"submit_order"</span>,
+  <span class="key">"kind"</span>: <span class="str">"signature"</span>,
+  <span class="key">"aliases"</span>: [<span class="str">"placeOrder"</span>, <span class="str">"报单"</span>],
+  <span class="key">"provenance"</span>: <span class="str">"derived"</span>,       <span class="ann">// 从 oms-api.ts 扫描</span>
+  <span class="key">"members"</span>: [
+    { <span class="key">"role"</span>: <span class="str">"param"</span>, <span class="key">"ref"</span>: <span class="str">"ticker"</span>, <span class="key">"position"</span>: 0 },
+    { <span class="key">"role"</span>: <span class="str">"param"</span>, <span class="key">"ref"</span>: <span class="str">"order_side"</span>, <span class="key">"position"</span>: 1 },
+    { <span class="key">"role"</span>: <span class="str">"returns"</span>, <span class="key">"ref"</span>: <span class="str">"order_id"</span> }
+  ]
+}</pre>
+            </div>
+          </div>
+
+          <div class="contract-foot">
+            <strong>verify 对照什么？</strong> 从生成代码抽出结构化 <code style="font-family:var(--mono);font-size:11px">usages</code>，例如
+            <code style="font-family:var(--mono);font-size:11px">{ name: "sym", value: "aapl" }</code>、
+            <code style="font-family:var(--mono);font-size:11px">{ name: "placeOrder", kind: "call" }</code>——
+            逐条与 ConstraintUnit 比对，输出可回注 Agent 的 violation / feedback（见 <a href="walkthrough.html" style="color:var(--accent)">Walkthrough</a>）。
+          </div>
+          <div class="contract-links">
+            完整 Schema → <a href="/spec/constraint-unit.schema.json">constraint-unit.schema.json</a>
+            · 样例数据 → <a href="/examples/quant/constraints.json">examples/quant/constraints.json</a>
+            · 设计 §2.2 → <a href="/docs/design.md">docs/design.md</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -975,41 +1535,6 @@
         </table>
         <div class="bundle-callout">
           <strong>多 Agent handoff：</strong>Planner 的 <code style="font-family:var(--mono);font-size:12px">bind_constraints</code> bundle 是传给 Coder 的标准契约载体。没有它，ticker / order_side 约束在 handoff 时丢失，语义漂移重现。
-        </div>
-      </div>
-    </section>
-
-    <!-- Harness 集成 -->
-    <section id="harness">
-      <div class="wrap">
-        <span class="act-tag">集成视角</span>
-        <div class="section-label">Harness</div>
-        <h2 class="section-title">在 Harness 中的位置</h2>
-        <p class="section-desc">
-          SemanticAnchor 是项目级 Harness 内的<strong>语义约束子层</strong>——不取代文件编辑、shell、测试编排；
-          在 Agent loop 的<strong>两个卡口</strong>接线：执行前 bind，落地前 verify。
-        </p>
-        <div class="harness-diagram"><pre>用户意图
-    │
-    ▼
-  bind_constraints(aliases)          ← ① 抛锚 · best-effort
-    │
-    ▼
-  Coder / Executor 生成
-    │
-    ▼
-  verify_usage(usages)                 ← ② 绷紧 · must-have
-    │
-    ├── pass → Harness 继续（写文件 / 跑测试）
-    └── fail → feedback 回注 → 重试</pre></div>
-        <table class="mini-table" style="margin-top:24px">
-          <tr><th>接法</th><th>场景</th></tr>
-          <tr><td>MCP 工具</td><td>Cursor / Claude 注册 semantic-anchor，Agent 主动调四动词</td></tr>
-          <tr><td>Harness 中间件</td><td>自研 agent：工具执行前 bind，patch 落地前 verify</td></tr>
-          <tr><td>进程内库</td><td>Demo / CI：<code style="font-family:var(--mono);font-size:12px">createDispatcher</code> 直接调</td></tr>
-        </table>
-        <div class="bundle-callout" style="margin-top:20px">
-          完整分层图、多 Agent handoff 与集成守则见 <a href="architecture.html#s2-1" style="color:var(--accent);text-decoration:none;font-weight:500">架构讲述 §2.1</a>。
         </div>
       </div>
     </section>
@@ -1094,46 +1619,41 @@
       </div>
     </section>
 
-    <!-- 第五幕 · 证明 -->
+    <!-- 第五幕 · 机制（二级：愿意深挖的人） -->
     <section id="act5">
       <div class="wrap">
-        <span class="act-tag">第五幕 · 证明与边界</span>
-        <div class="section-label">Crash Test</div>
-        <h2 class="section-title">量化限价报单：7 → 0</h2>
+        <span class="act-tag">幕后 · 怎么做到的</span>
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">对照契约 → 拦错 → 改对（可本地复现）</h2>
         <p class="section-desc">
-          走读：Planner bind → Coder 生成 → Gate 捕获 aapl/long/未脱敏 → 1 次 retry 收敛。无需 API Key，<code style="font-family:var(--mono);font-size:13px">npm run demo</code> 可复现。
+          首屏的红绿对比，背后是：事前注入契约、事后校验引用、失败把原因喂回 Agent 再改。
+          不必先搞懂术语——悬停案例看终端，或打开 <a href="walkthrough.html" style="color:var(--accent);font-weight:500">分步走读</a>。
+          （技术同学也称这为可复现的 before/after 对照，不是玄学评分。）
         </p>
+        <div class="case-grid" id="case-grid">
+          <a class="case-card active" href="walkthrough.html?case=quant&step=1" data-case="quant">
+            <span class="case-tag quant">量化</span>
+            <h3>限价报单 · AAPL @ 178.50</h3>
+            <p>OMS 报单：<code style="font-family:var(--mono);font-size:12px">sym→ticker</code>、<code style="font-family:var(--mono);font-size:12px">long→buy</code>、小写 ticker、账户明文 log。</p>
+            <div class="case-metric"><span class="bad">9</span> → <span class="good">0</span> shipped 语义错误</div>
+            <span class="case-link">进入案例步骤 →</span>
+          </a>
+          <a class="case-card" href="walkthrough.html?case=broker&step=1" data-case="broker">
+            <span class="case-tag broker">券商</span>
+            <h3>成交清算录入 · 600519.SH</h3>
+            <p>经纪业务：<code style="font-family:var(--mono);font-size:12px">custId→client_id</code>、证券代码缺后缀、清算日期格式、证件号脱敏。</p>
+            <div class="case-metric"><span class="bad">10</span> → <span class="good">0</span> shipped 语义错误</div>
+            <span class="case-link">进入案例步骤 →</span>
+          </a>
+        </div>
         <div class="terminal">
           <div class="terminal-bar">
             <span class="terminal-dot r"></span>
             <span class="terminal-dot y"></span>
             <span class="terminal-dot g"></span>
-            <span class="terminal-title">npm run demo</span>
+            <span class="terminal-title" id="terminal-title">npm run demo · 量化</span>
           </div>
-          <div class="terminal-body" id="terminal-output">
-            <div class="dim">TASK: Implement a limit buy order submission: ticker symbol, order side, quantity, and trading account id.</div>
-            <br>
-            <div class="banner">========================================================================</div>
-            <div class="banner">  WITH SemanticAnchor  (inject + gate + re-inject loop)</div>
-            <div class="banner">========================================================================</div>
-            <div><span class="line-head">[Planner]</span> bind_constraints → 4 resolved, 0 unresolved</div>
-            <div class="dim">  inject.systemPrefix: ticker, order_side, quantity, account_id</div>
-            <div><span class="line-head">[Gate]</span> pass=<span class="violation">false</span>  violations=3</div>
-            <div class="violation">    [VIOLATION] PATTERN: "aapl" must match /^[A-Z0-9.]{1,12}$/</div>
-            <div class="violation">    [VIOLATION] ENUM: "long" not in [buy, sell]</div>
-            <div class="violation">    [VIOLATION] SENSITIVE_NOT_HANDLED: account_id must mark masked:true</div>
-            <div><span class="line-head">[Gate]</span> retry 1: pass=<span class="pass">true</span>  violations=0</div>
-            <div class="pass">  RESULT: shipped with 0 semantic error(s) after 1 retry.</div>
-            <br>
-            <div class="banner">========================================================================</div>
-            <div class="banner">  NAIVE baseline  (prompt-only, no resolve / no gate)</div>
-            <div class="banner">========================================================================</div>
-            <div class="violation">  RESULT: shipped with 7 semantic error(s) — nothing caught them.</div>
-            <br>
-            <div class="banner">  CRASH-TEST SUMMARY</div>
-            <div>  prompt-only baseline : <span class="violation">7</span> semantic error(s) shipped</div>
-            <div>  with SemanticAnchor  : <span class="pass">0</span> semantic error(s) shipped</div>
-          </div>
+          <div class="terminal-body" id="terminal-output"></div>
         </div>
       </div>
     </section>
@@ -1143,33 +1663,137 @@
       <div class="wrap">
         <span class="act-tag">附录 · 快速开始</span>
         <div class="section-label">Quick Start</div>
-        <h2 class="section-title">快速开始</h2>
-        <p class="section-desc">安装依赖后，一条命令预览 Demo 报告，或启动 MCP 服务接入 Cursor。</p>
-        <div class="quick-grid">
+        <h2 class="section-title">安装与使用</h2>
+        <p class="section-desc">SemanticAnchor 是挂在你现有 Agent 工作流上的<strong style="font-weight:600;color:var(--anchor)">语义守门员</strong>，不是独立 App。Harness 工程师请先读 <a href="harness.html" style="color:var(--accent);font-weight:500">Harness 集成指南</a>；下面是从安装到第一次调用的步骤。</p>
+
+        <div class="start-callout">
+          <strong>注入是优化，守门是保证。</strong> 没有 verify，约束只是「建议」；开放世界任务必须跑 bind → act → verify → retry 闭环。
+        </div>
+
+        <div class="start-block">
+          <h3>一、安装</h3>
+          <p>需要 <strong>Node.js 18+</strong> 与 npm。克隆仓库、安装依赖，并用 demo 确认环境正常。</p>
           <div class="code-block">
-            <pre><span class="comment"># 安装</span>
+            <pre><span class="comment"># 1. 获取代码</span>
+<span class="cmd">git clone</span> &lt;repo-url&gt; semantic-anchor
+<span class="cmd">cd</span> semantic-anchor
+
+<span class="comment"># 2. 安装依赖（MCP Server + 协议实现）</span>
 <span class="cmd">npm install</span>
 
-<span class="comment"># 预览本页 + 终端 Demo</span>
-<span class="cmd">npm run preview</span>   <span class="comment"># → http://localhost:4173</span>
-<span class="cmd">npm run demo</span>      <span class="comment"># 终端碰撞测试</span>
-
-<span class="comment"># MCP 服务（Cursor 自动拉起）</span>
-<span class="cmd">npm run mcp</span></pre>
+<span class="comment"># 3. 验证（可选，确认协议与 demo 可跑）</span>
+<span class="cmd">npm test</span>
+<span class="cmd">npm run demo</span>        <span class="comment"># 应看到 9 → 0 碰撞测试</span></pre>
           </div>
-          <div class="code-block">
-            <pre><span class="comment"># .cursor/mcp.json</span>
+        </div>
+
+        <div class="start-block">
+          <h3>二、使用方式 A · MCP 接入（IDE / CLI Agent）</h3>
+          <p>把 <code style="font-family:var(--mono);font-size:12px">src/server.js</code> 注册为 MCP Server。Agent 通过宿主（Cursor、Claude Desktop、VS Code Copilot 等）自动调用四个工具。同一 Server 块，按宿主 schema 写入对应配置文件即可。</p>
+
+          <ol class="start-steps">
+            <li>
+              <h4>配置 MCP Server</h4>
+              <p>项目已含 <code style="font-family:var(--mono);font-size:12px">.cursor/mcp.json</code> 与 <code style="font-family:var(--mono);font-size:12px">.vscode/mcp.json</code>。在其他机器或宿主上，把路径改为<strong>绝对路径</strong>（Claude Desktop 不支持相对路径）：</p>
+              <div class="code-block">
+                <pre><span class="comment"># Cursor · .cursor/mcp.json</span>
+<span class="comment"># Claude Desktop · ~/Library/Application Support/Claude/claude_desktop_config.json</span>
 {
   <span class="flag">"mcpServers"</span>: {
     <span class="flag">"semantic-anchor"</span>: {
       <span class="flag">"command"</span>: <span class="out">"node"</span>,
-      <span class="flag">"args"</span>: [<span class="out">"src/server.js"</span>],
+      <span class="flag">"args"</span>: [<span class="out">"/absolute/path/to/semantic-anchor/src/server.js"</span>],
       <span class="flag">"env"</span>: {
-        <span class="flag">"SA_CONSTRAINTS"</span>: <span class="out">"examples/quant/constraints.json"</span>
+        <span class="flag">"SA_CONSTRAINTS"</span>: <span class="out">"/absolute/path/to/constraints.json"</span>
       }
     }
   }
 }</pre>
+              </div>
+              <p style="margin-top:12px"><code style="font-family:var(--mono);font-size:12px">SA_CONSTRAINTS</code>：单个 JSON 文件，或包含多个 <code style="font-family:var(--mono);font-size:12px">*.json</code> 的目录。Demo 可用 <code style="font-family:var(--mono);font-size:12px">examples/quant/constraints.json</code>。</p>
+            </li>
+            <li>
+              <h4>重启宿主并确认工具出现</h4>
+              <p>保存配置后重启 MCP 宿主。在 Agent 对话的工具列表中应看到 <strong>semantic-anchor</strong> 下的 4 个工具：</p>
+              <p><code style="font-family:var(--mono);font-size:12px">resolve</code> · <code style="font-family:var(--mono);font-size:12px">get_constraint</code> · <code style="font-family:var(--mono);font-size:12px">bind_constraints</code> · <code style="font-family:var(--mono);font-size:12px">verify_usage</code></p>
+              <p>调试：终端运行 <code style="font-family:var(--mono);font-size:12px">npm run mcp</code>，stderr 应输出 <code style="font-family:var(--mono);font-size:12px">loaded N constraint unit(s)</code>。</p>
+            </li>
+            <li>
+              <h4>准备你自己的约束（生产用法）</h4>
+              <p>把 <code style="font-family:var(--mono);font-size:12px">SA_CONSTRAINTS</code> 指向你项目的字段/枚举/API 契约。格式见 <a href="/spec/constraint-unit.schema.json" style="color:var(--accent)">ConstraintUnit Schema</a>，可参考 <code style="font-family:var(--mono);font-size:12px">examples/quant/constraints.json</code> 编写。</p>
+            </li>
+            <li>
+              <h4>Agent 工作流（两卡口）</h4>
+              <div class="path-flow"><span class="hl">① 任务开始</span>  bind_constraints({ aliases: ["ticker", "order side", …] })
+  → bundle 注入 context（declared → system prefix）
+
+<span class="hl">② 生成代码后、写文件前</span>  verify_usage({ usages: [...] })
+  → ok：放行写盘 / commit
+  → !ok：读 feedback → 修改 → 再 verify（通常 1 次 retry 收敛）</div>
+            </li>
+            <li>
+              <h4>试一句对话（Cursor / Claude Desktop Agent）</h4>
+              <div class="start-prompt">用 semantic-anchor MCP：先 bind_constraints 绑定限价报单相关字段（ticker、order side、quantity、account、limit price），生成 submit order 函数，从代码抽取 usages 后 verify_usage，有 violation 就按 feedback 改到达标。</div>
+            </li>
+          </ol>
+
+          <p style="margin-top:20px;margin-bottom:12px;font-size:13px;color:var(--text-secondary)">常见 MCP 宿主与配置文件：</p>
+          <table class="host-table">
+            <tr><th>Cursor</th><td><code>.cursor/mcp.json</code> 或 <code>~/.cursor/mcp.json</code></td></tr>
+            <tr><th>Claude Desktop</th><td><code>claude_desktop_config.json</code> → 顶层 <code>mcpServers</code>，需完全退出后重启</td></tr>
+            <tr><th>VS Code + Copilot</th><td><code>.vscode/mcp.json</code>，Copilot Agent 模式下使用</td></tr>
+            <tr><th>Windsurf</th><td><code>~/.codeium/windsurf/mcp_config.json</code></td></tr>
+            <tr><th>Cline / Continue</th><td>扩展 MCP 设置 或 <code>~/.continue/config.json</code></td></tr>
+            <tr><th>更多</th><td><a href="/docs/mcp-integration.md" style="color:var(--accent)">docs/mcp-integration.md</a> · <a href="/config/mcp/examples/" style="color:var(--accent)">config/mcp/examples/</a></td></tr>
+          </table>
+        </div>
+
+        <div class="start-block">
+          <h3>三、使用方式 B · 嵌入自研 Harness / CI</h3>
+          <p>不走 MCP、直接在 Node 进程里调用协议。适合自研 Agent loop、CI 守门、或不想依赖 IDE 的场景。</p>
+          <ol class="start-steps">
+            <li>
+              <h4>引入 semantic-gate 中间件</h4>
+              <div class="code-block">
+                <pre><span class="flag">const</span> { createStore } = require(<span class="out">'./src/protocol/constraint-store'</span>);
+<span class="flag">const</span> { createSemanticGate } = require(<span class="out">'./examples/harness-hook/semantic-gate'</span>);
+
+<span class="flag">const</span> store = createStore();
+store.load(require(<span class="out">'./examples/quant/constraints.json'</span>);
+<span class="flag">const</span> gate = createSemanticGate(store);</pre>
+              </div>
+            </li>
+            <li>
+              <h4>事前 bind + 事后 enforce</h4>
+              <div class="code-block">
+                <pre><span class="comment">// 任务开始：注入 bundle</span>
+gate.bind({ aliases: [<span class="out">'ticker symbol'</span>, <span class="out">'order side'</span>, …], extraConstraints });
+
+<span class="comment">// 模型生成后：verify + retry 直到通过</span>
+<span class="flag">const</span> outcome = <span class="flag">await</span> gate.enforce(usages, {
+  retry: (feedback) => modelFixAndReturnUsages(feedback),
+});
+<span class="flag">if</span> (outcome.ok) { <span class="comment">/* 写文件 / 跑测试 */</span> }</pre>
+              </div>
+            </li>
+            <li>
+              <h4>跑通演示</h4>
+              <div class="code-block">
+                <pre><span class="cmd">npm run demo:harness</span>   <span class="comment"># bind → enforce → retry</span>
+<span class="cmd">npm run demo:derived</span>   <span class="comment"># TS 派生约束 + gate</span></pre>
+              </div>
+              <p style="margin-top:12px">参考 <a href="/docs/design.md" style="color:var(--accent)">design.md §2.1</a> · <code style="font-family:var(--mono);font-size:12px">examples/harness-hook/semantic-gate.js</code></p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="start-dev">
+          <h3>四、开发者 / CI</h3>
+          <div class="code-block">
+            <pre><span class="cmd">npm test</span>                   <span class="comment"># 单元测试 + 9→0 回归</span>
+<span class="cmd">npm run validate:spec</span>      <span class="comment"># ConstraintUnit schema 校验</span>
+<span class="cmd">npm run demo:walkthrough</span>   <span class="comment"># 终端分步讲解</span>
+<span class="cmd">npm run preview</span>            <span class="comment"># 本地预览本页（端口 4173）</span></pre>
           </div>
         </div>
       </div>
@@ -1180,6 +1804,9 @@
     <div class="wrap footer-inner">
       <span class="footer-copy">SemanticAnchor · MIT · 工程验证报告，不是产品</span>
       <ul class="footer-links">
+        <li><a href="harness.html">Harness 集成</a></li>
+        <li><a href="ecosystem.html">生态关系</a></li>
+        <li><a href="walkthrough.html">Walkthrough</a></li>
         <li><a href="architecture.html">架构</a></li>
         <li><a href="/docs/design.md">设计文档</a></li>
         <li><a href="/spec/constraint-unit.schema.json">Schema</a></li>
@@ -1187,5 +1814,76 @@
       </ul>
     </div>
   </footer>
+
+  <script>
+  (function () {
+    const TERMINALS = {
+      quant: `
+        <div class="dim">TASK: Implement a limit buy order submission for AAPL @ 178.50: ticker symbol, order side, quantity, and trading account id.</div>
+        <br>
+        <div class="banner">========================================================================</div>
+        <div class="banner">  WITH SemanticAnchor  (inject + gate + re-inject loop)</div>
+        <div class="banner">========================================================================</div>
+        <div><span class="line-head">[Planner]</span> bind_constraints → 5 resolved, 0 unresolved</div>
+        <div class="dim">  inject.systemPrefix: ticker, order_side, quantity, limit_price, account_id</div>
+        <div><span class="line-head">[Gate]</span> pass=<span class="violation">false</span>  violations=3</div>
+        <div class="violation">    [VIOLATION] PATTERN: "aapl" must match /^[A-Z0-9.]{1,12}$/</div>
+        <div class="violation">    [VIOLATION] ENUM: "long" not in [buy, sell]</div>
+        <div class="violation">    [VIOLATION] SENSITIVE_NOT_HANDLED: account_id must mark masked:true</div>
+        <div><span class="line-head">[Gate]</span> retry 1: pass=<span class="pass">true</span>  violations=0</div>
+        <div class="pass">  RESULT: shipped with 0 semantic error(s) after 1 retry.</div>
+        <br>
+        <div class="banner">========================================================================</div>
+        <div class="banner">  NAIVE baseline  (prompt-only, no resolve / no gate)</div>
+        <div class="banner">========================================================================</div>
+        <div class="violation">  RESULT: shipped with 9 semantic error(s) — nothing caught them.</div>
+        <br>
+        <div class="banner">  CRASH-TEST SUMMARY</div>
+        <div>  prompt-only baseline : <span class="violation">9</span> semantic error(s) shipped</div>
+        <div>  with SemanticAnchor  : <span class="pass">0</span> semantic error(s) shipped</div>`,
+      broker: `
+        <div class="dim">TASK: Implement a retail client trade settlement record: client ID, security code, trade amount, settlement date, and national ID.</div>
+        <br>
+        <div class="banner">========================================================================</div>
+        <div class="banner">  WITH SemanticAnchor  (inject + gate + re-inject loop)</div>
+        <div class="banner">========================================================================</div>
+        <div><span class="line-head">[Planner]</span> bind_constraints → 5 resolved, 0 unresolved</div>
+        <div class="dim">  inject.systemPrefix: client_id, security_code, trade_amount, settlement_date, id_number</div>
+        <div><span class="line-head">[Gate]</span> pass=<span class="violation">false</span>  violations=5</div>
+        <div class="violation">    [VIOLATION] PATTERN: client ids look like CLT10001234</div>
+        <div class="violation">    [VIOLATION] PATTERN: A-share codes use 600519.SH format</div>
+        <div class="violation">    [VIOLATION] PATTERN: settlement dates use YYYY-MM-DD</div>
+        <div class="violation">    [VIOLATION] SENSITIVE_NOT_HANDLED: id_number must mark masked:true</div>
+        <div class="violation">    [DRIFT] NON_CANONICAL_NAME: "recordSettlement" → record_settlement</div>
+        <div><span class="line-head">[Gate]</span> retry 1: pass=<span class="pass">true</span>  violations=0</div>
+        <div class="pass">  RESULT: shipped with 0 semantic error(s) after 1 retry.</div>
+        <br>
+        <div class="banner">========================================================================</div>
+        <div class="banner">  NAIVE baseline  (prompt-only, no resolve / no gate)</div>
+        <div class="banner">========================================================================</div>
+        <div class="violation">  RESULT: shipped with 10 semantic error(s) — nothing caught them.</div>
+        <br>
+        <div class="banner">  CRASH-TEST SUMMARY</div>
+        <div>  prompt-only baseline : <span class="violation">10</span> semantic error(s) shipped</div>
+        <div>  with SemanticAnchor  : <span class="pass">0</span> semantic error(s) shipped</div>`,
+    };
+    const TITLES = { quant: 'npm run demo · 量化', broker: 'npm run demo · 券商' };
+    const grid = document.getElementById('case-grid');
+    const out = document.getElementById('terminal-output');
+    const title = document.getElementById('terminal-title');
+    if (!grid || !out) return;
+    function show(caseId) {
+      out.innerHTML = TERMINALS[caseId] || TERMINALS.quant;
+      if (title) title.textContent = TITLES[caseId] || TITLES.quant;
+      grid.querySelectorAll('.case-card').forEach((c) =>
+        c.classList.toggle('active', c.dataset.case === caseId));
+    }
+    grid.addEventListener('mouseenter', (e) => {
+      const card = e.target.closest('.case-card');
+      if (card) show(card.dataset.case);
+    }, true);
+    show('quant');
+  })();
+  </script>
 </body>
 </html>

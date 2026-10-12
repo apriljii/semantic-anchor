@@ -1,0 +1,88 @@
+{
+  "units": [
+    {
+      "id": "client_id",
+      "label": "Client ID",
+      "description": "Retail brokerage client identifier.",
+      "aliases": ["custId", "customer_id", "cust_no", "客户号", "客户编号"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^CLT[0-9]{8,}$",
+        "patternMessage": "client ids look like CLT10001234"
+      }
+    },
+    {
+      "id": "security_code",
+      "label": "Security Code",
+      "description": "Listed security identifier (e.g. 600519.SH, 000001.SZ).",
+      "aliases": ["stockCode", "symbol", "sec_code", "证券代码", "股票代码"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^[0-9]{6}\\.(SH|SZ)$",
+        "patternMessage": "A-share codes use 6 digits + .SH or .SZ (e.g. 600519.SH)"
+      }
+    },
+    {
+      "id": "trade_amount",
+      "label": "Trade Amount",
+      "description": "Gross trade notional in CNY.",
+      "aliases": ["amt", "amount", "notional", "成交金额", "成交额"],
+      "type": "decimal",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": { "required": true, "min": 0, "precision": 2 }
+    },
+    {
+      "id": "settlement_date",
+      "label": "Settlement Date",
+      "description": "T+1 settlement date (ISO 8601 date).",
+      "aliases": ["settleDt", "settle_date", "清算日期", "交收日"],
+      "type": "date",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "patternMessage": "settlement dates use YYYY-MM-DD"
+      }
+    },
+    {
+      "id": "id_number",
+      "label": "National ID Number",
+      "description": "Client national ID for compliance verification.",
+      "aliases": ["idNo", "id_card", "national ID", "national id", "证件号码", "身份证号"],
+      "type": "string",
+      "provenance": "declared",
+      "source": "registry",
+      "constraints": {
+        "required": true,
+        "pattern": "^[0-9]{17}[0-9X]$",
+        "patternMessage": "18-digit national ID"
+      },
+      "policies": ["sensitive"]
+    },
+    {
+      "id": "record_settlement",
+      "kind": "signature",
+      "label": "recordSettlement",
+      "description": "Persists a retail trade settlement record — composite of client, security, amount, date and compliance id.",
+      "aliases": ["saveSettlement", "postSettlement", "录入清算", "成交清算"],
+      "type": "object",
+      "provenance": "derived",
+      "source": "typescript",
+      "members": [
+        { "role": "param", "ref": "client_id", "position": 0, "required": true },
+        { "role": "param", "ref": "security_code", "position": 1, "required": true },
+        { "role": "param", "ref": "trade_amount", "position": 2, "required": true },
+        { "role": "param", "ref": "settlement_date", "position": 3, "required": true },
+        { "role": "param", "ref": "id_number", "position": 4, "required": true }
+      ]
+    }
+  ]
+}

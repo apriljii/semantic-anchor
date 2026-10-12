@@ -113,81 +113,7 @@ field (ticker)  →  param (quantity)  →  enum (order_side)
 
 > **窄腰原则**：只管「引用」这一薄切面，不管「逻辑」。`submitOrder` 存不存在、签名是什么 → 在范围内；内部撮合逻辑对不对 → 不在范围内。
 
-#### 在 Harness 中的位置
-
-SemanticAnchor 是**项目级 Harness 内的语义约束子层**，不是 Harness 本身：
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  项目级 Harness（Claude Code / Cursor Agent / 自研 loop）      │
-│  · 用户意图 · 规划/执行 · 文件编辑 · shell · 测试 · 多轮状态    │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │  SemanticAnchor（语义约束子层）                          │  │
-│  │  resolve · get_constraint · bind_constraints · verify   │  │
-│  └────────────────────────────────────────────────────────┘  │
-│  · 环境裁决仍由 tsc / pytest / eslint 等外部真理承担          │
-└──────────────────────────────────────────────────────────────┘
-```
-
-| 层 | 职责 | SemanticAnchor 是否覆盖 |
-|----|------|-------------------------|
-| Harness 外层 | repo 理解、工具编排、权限、会话记忆 | ❌ 不取代 |
-| **语义约束子层** | 引用解析、契约注入、行动后守门 | ✅ 本协议 |
-| 环境真理 | 编译、类型、测试、lint | 作为 verify 的输入，不替代 |
-
-#### 集成到 Agent 设计：应该怎样接线
-
-把 SemanticAnchor 接进 Agent，**不是**在 system prompt 里多写几条命名规范，而是在 **Agent loop 的两个卡口**挂工具：
-
-```
-用户意图
-    │
-    ▼
-┌─ ① 抛锚（best-effort）────────────────────────────────────┐
-│  Planner / Orchestrator 从任务提取 aliases                  │
-│  → bind_constraints(aliases [, extraConstraints])          │
-│  → bundle + injection 指引（declared→system 前缀；derived→JIT）│
-└──────────────────────────┬───────────────────────────────┘
-                           ▼
-              Coder / Executor 生成（代码、调用、字段赋值…）
-                           │
-                           ▼
-┌─ ② 绷紧（must-have）──────────────────────────────────────┐
-│  从生成物抽取 usages → verify_usage(usages [, environment]) │
-│  → pass：Harness 继续（写文件 / 跑测试 / 提交）              │
-│  → fail：结构化 feedback 回注 → Coder 重试（有上限）          │
-└────────────────────────────────────────────────────────────┘
-```
-
-**三种常见接法：**
-
-| 接法 | 适用 | 做法 |
-|------|------|------|
-| **MCP 工具** | Cursor / Claude Desktop 等 | 注册 `semantic-anchor` MCP；Agent 在规划与生成后主动调四动词 |
-| **Harness 中间件** | 自研 coding agent | 在「执行工具前」调 `bind`，在「工具返回后 / patch 落地前」调 `verify` |
-| **进程内库** | Demo / CI 碰撞测试 | `createDispatcher(store)` 直接调，如 [`examples/multi-agent/demo.js`](../examples/multi-agent/demo.js) |
-
-**单 Agent vs 多 Agent：**
-
-```
-单 Agent：  同一 loop 内 bind → act → verify → retry
-
-多 Agent：  Planner --bind→ bundle --handoff→ Coder --act→ usages
-                                              ↓
-                                    Gate(verify) --feedback→ Coder
-```
-
-多 Agent 时 **bundle 是标准 handoff 载荷**——Planner 解析到的 `ticker` / `order_side` 契约必须结构化传递；否则 Coder 退回 prompt 软约束，漂移重现（见 §4）。
-
-**集成时 Agent 设计者应遵守：**
-
-1. **守门不可跳过** — 凡产出含命名引用（字段、枚举、符号、签名）的 act，落地前必须 `verify_usage`。
-2. **注入不可替代守门** — `bind_constraints` 提高首次正确率，不保证遵守；可靠性压在 verify。
-3. **derived 约束要喂进来** — 从 AST / OpenAPI / LSP 派生的 ConstraintUnit 通过 `extraConstraints` 传入 bind，不由协议凭空发明。
-4. **环境裁决并列** — tsc / pytest 结果可规整进 verify 的 `environment` 钩子；SemanticAnchor 统一 violation 形状，不取代测试 runner。
-5. **miss 诚实处理** — `unresolved` / `unverifiable` 不硬失败、不编造；由 Agent 决定追问用户或带风险继续。
-
-**不应做的事：** 用 SemanticAnchor 取代文件编辑、shell、测试编排；把业务规则塞进 ConstraintUnit；仅靠 system prompt 承载全部语义约束。
+**在 Harness 中的位置：** SemanticAnchor 是项目级 Harness 内的**语义约束子层**（resolve / bind / verify），不取代 repo / shell / test / loop。
 
 ---
 
@@ -298,11 +224,12 @@ SemanticAnchor:  status:'unresolved' → verify 兜底
 | `violation` | 违反契约（枚举/格式/敏感未处理） | **必须修** |
 | `drift` | 有规范 id 却用非规范名（sym → ticker） | 应修 |
 | `unverifiable` | 无约束锚定 | 报告，不硬失败 |
+| `SYMBOL_NOT_FOUND` | 调用不在 registry 中的 symbol/signature | **必须修**（当 store 含 symbol 表时） |
 
 **两个 ground truth：**
 
-1. **契约自身** — type / pattern / enum / policy（确定性）。
-2. **运行时环境**（可插拔）— tsc / pytest / eslint，规整为同一 violation 结构。
+1. **契约自身** — type / pattern / enum / policy / **symbol·signature 存在性**（确定性）。
+2. **运行时环境**（可插拔）— tsc / pytest / eslint，规整为同一 violation 结构。参考实现：[`src/adapters/tsc-environment.js`](../src/adapters/tsc-environment.js)。
 
 > LSP / type checker 是环境裁决**来源之一**，不是替代品。SemanticAnchor 统一 declared + derived + emergent 的注入与验证面。
 
@@ -362,20 +289,36 @@ Gate     verify_usage(usages)        →  feedback → Coder retry
 
 ---
 
-## 6. 走读：量化限价报单
+## 6. 走读：量化限价报单（真实代码）
 
-任务（见 demo）：*Implement a limit buy order submission: ticker symbol, order side, quantity, and trading account id.*
+任务：*Implement a limit buy order submission for AAPL @ 178.50: ticker, order side, quantity, account.*
 
-| 步骤 | 动作 | 结果 |
-|------|------|------|
-| 1 | Planner `bind_constraints` | 4 实体 resolved → bundle |
-| 2 | 注入 | Coder 拿到 canonical id，消除 4 处 drift |
-| 3 | Coder 首次生成 | 仍错：`aapl`（pattern）、`long`（enum）、account 未 masked |
-| 4 | Gate `verify_usage` | 3 violations → 结构化 feedback |
-| 5 | Coder retry | `AAPL` / `buy` / `masked:true` |
-| 6 | Gate 再次 verify | pass → **0 shipped 错误** |
+**真实产物**（TypeScript，像 Coder Agent 会写的代码）：
 
-Naive 基线（无 bind、无 loop）：同样生成物 → **7 错误全部 shipped**。
+```
+examples/quant/limit-buy/artifacts/
+  naive.ts   ← prompt-only：sym / long / aapl / 明文 log
+  draft.ts   ← 注入后：命名对了，值/策略仍错
+  fixed.ts   ← Gate feedback + 1 retry 后收敛
+```
+
+| 步骤 | 动作 | 读者看到 |
+|------|------|----------|
+| 1 | Planner `bind_constraints` | bundle JSON → Coder |
+| 2 | Naive Coder（无循环） | `naive.ts` → **7 shipped 错误** |
+| 3 | Protocol Coder + Gate | `draft.ts` → 3 violations + feedback |
+| 4 | Coder retry | `fixed.ts` → **0 shipped 错误** |
+
+运行：
+
+```bash
+npm run demo:walkthrough   # 逐步 narrated（推荐理解）
+npm run demo               # metrics only（7 vs 0）
+```
+
+交互版：[`public/walkthrough.html`](../public/walkthrough.html) · 文档：[`docs/demo-walkthrough.md`](./demo-walkthrough.md)
+
+> **诚实说明：** demo 用预定义 usages 映射代替 AST 提取，保证无 API Key、100% 可复现。生产 Harness 中，同结构输入来自静态分析或 Agent field manifest。
 
 ---
 
@@ -409,7 +352,7 @@ Compass（私有 · 生产）                 SemanticAnchor（开源 · 协议�
 | **规则引擎（达）** | 业务阈值/跨实体规则 → Non-Goal |
 | **Prompt** | 软约束；本报告 7→0 证明不够 |
 
-迁移边界见 [`MIGRATION.md`](../MIGRATION.md)。
+迁移边界见 [`MIGRATION.md`](../MIGRATION.md)。与 OpenSpec / 8 维 Schema 的分层关系见 [`public/ecosystem.html`](../public/ecosystem.html)。
 
 ---
 

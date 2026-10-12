@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "semantic-anchor": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/src/server.js"],
+      "env": {
+        "SA_CONSTRAINTS": "${workspaceFolder}/examples/quant/constraints.json"
+      }
+    }
+  }
+}

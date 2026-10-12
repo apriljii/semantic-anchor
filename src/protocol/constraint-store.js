@@ -66,11 +66,27 @@ function createStore() {
     norm,
     load,
     loadDir,
+    /** Register a single unit at runtime (e.g. derived from AST during bind). */
+    register(unit) {
+      if (unit && unit.id) indexUnit(unit);
+      return unit;
+    },
     get(id) {
       return units[id] || null;
     },
     all() {
       return Object.values(units);
+    },
+    /** Units that form the project's symbol/signature registry (derived or declared). */
+    symbols() {
+      return Object.values(units).filter((u) =>
+        ['symbol', 'signature', 'endpoint'].includes(u.kind || '')
+      );
+    },
+    hasSymbolRegistry() {
+      return Object.values(units).some((u) =>
+        ['symbol', 'signature', 'endpoint'].includes(u.kind || '')
+      );
     },
     size() {
       return Object.keys(units).length;

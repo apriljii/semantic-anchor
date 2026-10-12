@@ -3,10 +3,13 @@
  * SemanticAnchor — MCP stdio server (the ~200-line reference implementation).
  *
  * Migrated from field-registry/src/mcp-stdio-server.js. Exposes the 4 protocol
- * tools over the Model Context Protocol so any agent/IDE (Cursor, Claude Code, ...)
- * can call them.
+ * tools over the Model Context Protocol so any MCP-compatible host (Cursor, Claude Desktop,
+ * VS Code Copilot, Windsurf, Cline, Continue, Zed, …) can call them.
  *
- * Configure (Cursor .cursor/mcp.json or Claude desktop config):
+ * Configure per host — see docs/mcp-integration.md. Examples:
+ *   Cursor:         .cursor/mcp.json
+ *   Claude Desktop: claude_desktop_config.json → mcpServers
+ *   VS Code:        .vscode/mcp.json
  *   {
  *     "mcpServers": {
  *       "semantic-anchor": {

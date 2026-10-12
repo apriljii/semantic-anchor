@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SemanticAnchor — 案例 Walkthrough</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+      --accent: #4d6bfe; --accent-soft: rgba(77,107,254,0.08);
+      --anchor: #1e4d7c; --anchor-soft: rgba(30,77,124,0.08);
+      --border: rgba(15,23,42,0.08); --success: #10b981; --danger: #ef4444;
+      --radius: 14px; --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: #f8fafc; color: var(--text); line-height: 1.6; font-size: 15px; }
+    nav {
+      position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px;
+    }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 100%;
+      display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { text-decoration: none; color: var(--anchor); font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 20px; list-style: none; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    .hero { margin-bottom: 32px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+      padding: 4px 10px; border-radius: 6px; margin-bottom: 12px; }
+    h1 { font-size: 1.85rem; color: var(--anchor); letter-spacing: -0.03em; margin-bottom: 12px; }
+    .lead { color: var(--text-secondary); max-width: 640px; margin-bottom: 20px; }
+    .task-box {
+      background: #fff; border: 1px solid var(--border); border-left: 3px solid var(--anchor);
+      border-radius: 0 var(--radius) var(--radius) 0; padding: 16px 20px; font-size: 14px;
+      color: var(--text-secondary); margin-bottom: 24px;
+    }
+    .case-tabs { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+    .case-tab {
+      flex: 1; min-width: 220px; background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px; cursor: pointer; text-align: left;
+      font-family: var(--font); transition: all 0.15s;
+    }
+    .case-tab:hover { border-color: rgba(30,77,124,0.25); }
+    .case-tab.active { border-color: rgba(30,77,124,0.35); background: var(--anchor-soft); box-shadow: 0 4px 16px rgba(30,77,124,0.08); }
+    .case-tab-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+    .case-tab-title { font-size: 15px; font-weight: 600; color: var(--anchor); margin-bottom: 4px; }
+    .case-tab-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .case-tab-metric { margin-top: 10px; font-family: var(--mono); font-size: 13px; }
+    .case-tab-metric .bad { color: var(--danger); font-weight: 600; }
+    .case-tab-metric .good { color: var(--success); font-weight: 600; }
+    .steps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+    .step-btn {
+      border: 1px solid var(--border); background: #fff; border-radius: 999px;
+      padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-secondary);
+      font-family: var(--font); transition: all 0.15s;
+    }
+    .step-btn:hover { border-color: rgba(30,77,124,0.25); color: var(--anchor); }
+    .step-btn.active { background: var(--anchor-soft); border-color: rgba(30,77,124,0.3); color: var(--anchor); font-weight: 600; }
+    .panel { display: none; animation: fade 0.2s ease; }
+    .panel.active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .panel h2 { font-size: 1.25rem; color: var(--anchor); margin-bottom: 8px; }
+    .panel p { color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+    .code-wrap {
+      background: #0f172a; border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 8px 32px rgba(15,23,42,0.12);
+    }
+    .code-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; background: #1e293b; border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px; color: #94a3b8; font-family: var(--mono);
+    }
+    .code-head .badge-ok { color: var(--success); }
+    .code-head .badge-bad { color: var(--danger); }
+    pre {
+      margin: 0; padding: 18px 20px; overflow-x: auto;
+      font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #e2e8f0;
+      white-space: pre;
+    }
+    .ln { color: #475569; user-select: none; display: inline-block; width: 2em; }
+    .hl-drift { background: rgba(239,68,68,0.15); display: block; margin: 0 -20px; padding: 0 20px; }
+    .hl-violation { background: rgba(245,158,11,0.12); display: block; margin: 0 -20px; padding: 0 20px; }
+    .hl-ok { background: rgba(16,185,129,0.1); display: block; margin: 0 -20px; padding: 0 20px; }
+    .feedback {
+      background: #fff; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius);
+      padding: 16px 20px; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+      color: var(--danger); white-space: pre-wrap;
+    }
+    .text-box {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 20px; font-family: var(--mono); font-size: 12px; line-height: 1.65;
+      color: var(--text-secondary); overflow-x: auto; white-space: pre-wrap;
+    }
+    /* JSON / code syntax */
+    .jk { color: #a5b4fc; }
+    .js { color: #6ee7b7; }
+    .jn { color: #fcd34d; }
+    .jb { color: #f472b6; }
+    .jp { color: #64748b; }
+    .tk { color: #93c5fd; }
+    .ts { color: #6ee7b7; }
+    .tc { color: #64748b; font-style: italic; }
+    .tn { color: #fcd34d; }
+    .summary {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;
+    }
+    .sum-card {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; text-align: center;
+    }
+    .sum-card.bad { border-color: rgba(239,68,68,0.2); }
+    .sum-card.good { border-color: rgba(16,185,129,0.2); }
+    .sum-num { font-size: 2.5rem; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+    .sum-card.bad .sum-num { color: var(--danger); }
+    .sum-card.good .sum-num { color: var(--success); }
+    .sum-label { font-size: 13px; color: var(--text-muted); }
+    .cmd { margin-top: 24px; padding: 14px 18px; background: #0f172a; border-radius: var(--radius);
+      font-family: var(--mono); font-size: 13px; color: #93c5fd; }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">SemanticAnchor</a>
+    <ul class="nav-links">
+      <li><a href="harness.html">Harness 集成</a></li>
+      <li><a href="index.html#act5">第五幕</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="/docs/demo-walkthrough.md">文档</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="tag">Real Scenario Demo</span>
+    <h1 id="hero-title"></h1>
+    <p class="lead" id="hero-lead"></p>
+    <div class="task-box" id="hero-task"></div>
+  </div>
+
+  <div class="case-tabs" id="case-tabs"></div>
+
+  <div class="steps" id="steps">
+    <button class="step-btn active" data-step="0">0 · 任务</button>
+    <button class="step-btn" data-step="1">1 · bind</button>
+    <button class="step-btn" data-step="2">2 · derived</button>
+    <button class="step-btn" data-step="3">3 · Naive 代码</button>
+    <button class="step-btn" data-step="4">4 · Gate 拦截</button>
+    <button class="step-btn" data-step="5">5 · 收敛</button>
+    <button class="step-btn" data-step="6">6 · 对比</button>
+  </div>
+
+  <div id="panels"></div>
+</div>
+
+<script>
+const CASES = {
+  quant: {
+    label: '量化',
+    title: '量化限价买入 · AAPL @ 178.50',
+    lead: '用一份真实的 TypeScript 报单代码走通 SemanticAnchor 四步：任务 → bind bundle → 生成代码 → verify 收敛。代码能编译、能跑，但语义引用可能是错的——这正是协议要拦的事。',
+    task: 'PM 任务：Implement a limit buy order submission for AAPL @ 178.50: ticker symbol, order side, quantity, and trading account id.',
+    artifactPath: 'examples/quant/limit-buy/artifacts/{naive,draft,fixed}.ts',
+    aliases: ['ticker symbol', 'order side', 'quantity', 'account', 'limit price'],
+    bindResult: {
+      stats: { resolved: 5, unresolved: 0 },
+      inject: { systemPrefix: ['ticker', 'order_side', 'quantity', 'limit_price', 'account_id'] },
+      bundle: [
+        { id: 'ticker', kind: 'field', constraints: { pattern: '^[A-Z0-9.]{1,12}$' } },
+        { id: 'order_side', kind: 'enum', values: ['buy', 'sell'] },
+        { id: 'quantity', kind: 'field', type: 'integer' },
+        { id: 'account_id', policies: ['sensitive'] },
+      ],
+    },
+    naive: {
+      file: 'artifacts/naive.ts',
+      errors: '9 semantic errors',
+      lines: [
+        { n: 9, hl: 'drift', text: "    sym: 'aapl'," },
+        { n: 10, hl: 'drift', text: "    side: 'long'," },
+        { n: 11, hl: 'drift', text: '    qty: 100,' },
+        { n: 12, text: '    limitPrice: 178.5,' },
+        { n: 13, hl: 'drift', text: "    account: 'ACC12345678'," },
+        { n: 16, hl: 'violation', text: "  console.log('Submitting order', payload);" },
+        { n: 17, text: '  return omsClient.placeOrder(payload);' },
+      ],
+    },
+    draft: {
+      file: 'artifacts/draft.ts',
+      errors: '3 violations',
+      lines: [
+        { n: 8, text: '  const payload = {' },
+        { n: 9, hl: 'violation', text: "    ticker: 'aapl'," },
+        { n: 10, hl: 'violation', text: "    order_side: 'long'," },
+        { n: 11, text: '    quantity: 100,' },
+        { n: 14, hl: 'violation', text: "    account_id: 'ACC12345678'," },
+        { n: 17, text: "  console.log('Submitting order', payload);" },
+      ],
+      feedback: `[VIOLATION] PATTERN: tickers use uppercase (AAPL)
+[VIOLATION] ENUM: "long" not in [buy, sell]
+[VIOLATION] SENSITIVE_NOT_HANDLED: account_id must mark masked:true
+
+Fix the VIOLATION/DRIFT items and re-submit.`,
+    },
+    fixed: {
+      file: 'artifacts/fixed.ts',
+      status: '0 errors · shipped',
+      lines: [
+        { n: 8, hl: 'ok', text: "    ticker: 'AAPL'," },
+        { n: 9, hl: 'ok', text: "    order_side: 'buy'," },
+        { n: 10, text: '    quantity: 100,' },
+        { n: 11, text: '    limit_price: 178.5,' },
+        { n: 16, hl: 'ok', text: "  console.log('Submitting order', {" },
+        { n: 18, hl: 'ok', text: "    account_id: 'ACC****5678'," },
+        { n: 20, text: '  return omsClient.submitOrder(payload);' },
+      ],
+    },
+    naiveErrors: 9,
+    cmd: 'npm run demo:walkthrough',
+    derivedCmd: 'npm run demo:derived',
+    apiTs: 'examples/quant/limit-buy/artifacts/oms-api.ts',
+    signatureAlias: 'submit order',
+  },
+  broker: {
+    label: '券商',
+    title: '券商成交清算录入 · 600519.SH',
+    lead: '经纪业务侧的真实 TypeScript 清算录入代码，同样走 bind → verify → retry 闭环。客户号、证券代码、清算日期、证件号——字段名和格式都容易漂，敏感信息更要绷紧。',
+    task: 'PM 任务：Implement a retail client trade settlement record: client ID, security code, trade amount, settlement date, and national ID for compliance verification.',
+    artifactPath: 'examples/broker/settlement-record/artifacts/{naive,draft,fixed}.ts',
+    aliases: ['client ID', 'security code', 'trade amount', 'settlement date', 'national ID'],
+    bindResult: {
+      stats: { resolved: 5, unresolved: 0 },
+      inject: { systemPrefix: ['client_id', 'security_code', 'trade_amount', 'settlement_date', 'id_number'] },
+      bundle: [
+        { id: 'client_id', kind: 'field', constraints: { pattern: '^CLT[0-9]{8,}$' } },
+        { id: 'security_code', kind: 'field', constraints: { pattern: '^[0-9]{6}\\.(SH|SZ)$' } },
+        { id: 'trade_amount', kind: 'field', type: 'decimal' },
+        { id: 'settlement_date', kind: 'field', constraints: { pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
+        { id: 'id_number', policies: ['sensitive'] },
+      ],
+    },
+    naive: {
+      file: 'artifacts/naive.ts',
+      errors: '10 semantic errors',
+      lines: [
+        { n: 9, hl: 'drift', text: "    custId: 'clt10001234'," },
+        { n: 10, hl: 'drift', text: "    stockCode: '600519'," },
+        { n: 11, hl: 'drift', text: '    amt: 178500.0,' },
+        { n: 12, hl: 'drift', text: "    settleDt: '2026/03/15'," },
+        { n: 13, hl: 'drift', text: "    idNo: '110101199001011234'," },
+        { n: 16, hl: 'violation', text: "  console.log('Recording settlement', record);" },
+        { n: 17, text: '  return brokerCore.saveSettlement(record);' },
+      ],
+    },
+    draft: {
+      file: 'artifacts/draft.ts',
+      errors: '5 violations',
+      lines: [
+        { n: 8, text: '  const record = {' },
+        { n: 9, hl: 'violation', text: "    client_id: 'clt10001234'," },
+        { n: 10, hl: 'violation', text: "    security_code: '600519'," },
+        { n: 11, text: '    trade_amount: 178500.0,' },
+        { n: 12, hl: 'violation', text: "    settlement_date: '2026/03/15'," },
+        { n: 14, hl: 'violation', text: "    id_number: '110101199001011234'," },
+        { n: 17, text: "  console.log('Recording settlement', record);" },
+      ],
+      feedback: `[VIOLATION] PATTERN: client ids look like CLT10001234
+[VIOLATION] PATTERN: A-share codes use 6 digits + .SH or .SZ (e.g. 600519.SH)
+[VIOLATION] PATTERN: settlement dates use YYYY-MM-DD
+[VIOLATION] SENSITIVE_NOT_HANDLED: id_number must mark masked:true
+[DRIFT] NON_CANONICAL_NAME: "recordSettlement" should be "record_settlement"
+
+Fix the VIOLATION/DRIFT items and re-submit.`,
+    },
+    fixed: {
+      file: 'artifacts/fixed.ts',
+      status: '0 errors · shipped',
+      lines: [
+        { n: 8, hl: 'ok', text: "    client_id: 'CLT10001234'," },
+        { n: 9, hl: 'ok', text: "    security_code: '600519.SH'," },
+        { n: 10, text: '    trade_amount: 178500.0,' },
+        { n: 11, hl: 'ok', text: "    settlement_date: '2026-03-15'," },
+        { n: 16, hl: 'ok', text: "  console.log('Recording settlement', {" },
+        { n: 18, hl: 'ok', text: "    id_number: '110****9011234'," },
+        { n: 20, text: '  return brokerCore.record_settlement(record);' },
+      ],
+    },
+    naiveErrors: 10,
+    cmd: 'npm run demo   # 量化终端版；券商见本页',
+    derivedCmd: 'npm run demo:derived:broker',
+    apiTs: 'examples/broker/settlement-record/artifacts/broker-api.ts',
+    signatureAlias: '录入清算',
+  },
+};
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJson(obj) {
+  const raw = JSON.stringify(obj, null, 2);
+  return raw.split('\n').map((line) => {
+    let h = esc(line);
+    h = h.replace(/^(\s*)"([^"\\]*(?:\\.[^"\\]*)*)"(\s*:)/,
+      '$1<span class="jk">"$2"</span>$3');
+    h = h.replace(/: "([^"\\]*(?:\\.[^"\\]*)*)"/,
+      ': <span class="js">"$1"</span>');
+    h = h.replace(/: (-?\d+(?:\.\d+)?)([,\s]*$)/,
+      ': <span class="jn">$1</span>$2');
+    h = h.replace(/: (true|false)([,\s]*$)/,
+      ': <span class="jb">$1</span>$2');
+    return h;
+  }).join('\n');
+}
+
+function renderCodeLines(lines) {
+  return lines.map(({ n, hl, text }) => {
+    const ln = `<span class="ln">${String(n).padStart(2)}</span>`;
+    const inner = `${ln}${esc(text)}`;
+    if (hl === 'drift') return `<span class="hl-drift">${inner}</span>`;
+    if (hl === 'violation') return `<span class="hl-violation">${inner}</span>`;
+    if (hl === 'ok') return `<span class="hl-ok">${inner}</span>`;
+    return inner;
+  }).join('\n');
+}
+
+function codeBlock(file, badge, badgeClass, lines) {
+  return `<div class="code-wrap">
+    <div class="code-head"><span>${esc(file)}</span><span class="${badgeClass}">${esc(badge)}</span></div>
+    <pre>${renderCodeLines(lines)}</pre>
+  </div>`;
+}
+
+function jsonBlock(label, obj) {
+  return `<div class="code-wrap">
+    <div class="code-head"><span>${esc(label)}</span><span>JSON</span></div>
+    <pre>${highlightJson(obj)}</pre>
+  </div>`;
+}
+
+function renderPanels(c) {
+  return `
+  <div class="panel active" data-panel="0">
+    <h2>场景设定</h2>
+    <p>Planner 从任务中提取 ${c.aliases.length} 个实体别名，调用 <code>bind_constraints</code> 打包契约 bundle，传给 Coder。Coder 生成业务函数——Harness 从代码里提取字段 usages，交给 <code>verify_usage</code> 裁决。</p>
+    <div class="text-box">Planner 提取的 aliases:
+${c.aliases.map(a => JSON.stringify(a)).join(', ')}
+
+产物路径:
+${c.artifactPath}
+
+TypeScript API stub（derived 扫描源）:
+${c.apiTs}</div>
+  </div>
+
+  <div class="panel" data-panel="1">
+    <h2>Step 1 · Planner bind_constraints（抛锚 · declared only）</h2>
+    <p>resolve 命中 ${c.aliases.length} 个 declared ConstraintUnit。system prefix 注入 canonical id 与合法值——此时尚无 derived signature。</p>
+    <div id="bind-declared">${jsonBlock('bind_constraints (declared only)', c.bindResult)}</div>
+  </div>
+
+  <div class="panel" data-panel="2">
+    <h2>Step 2 · Derived constraints（TS 扫描 + extraConstraints）</h2>
+    <p>Harness 扫描 <code>${esc(c.apiTs.split('/').pop())}</code>，从 API stub 派生 signature ConstraintUnit，经 <code>extraConstraints</code> 注册后再 bind。Planner 别名 <code>${esc(c.signatureAlias)}</code> 命中 derived unit，JIT 注入 submit/record 的参数契约。</p>
+    <div class="grid-2">
+      <div id="derived-units">${jsonBlock('deriveFromTypescript()', [{ id: '…', kind: 'signature', provenance: 'derived', members: ['…'] }])}</div>
+      <div id="bind-derived">${jsonBlock('bind_constraints (+ derived)', { stats: c.bindResult.stats, inject: { ...c.bindResult.inject, justInTime: ['submit_order'] } })}</div>
+    </div>
+    <div class="cmd" style="margin-top:16px">${esc(c.derivedCmd)}</div>
+  </div>
+
+  <div class="panel" data-panel="3">
+    <h2>Step 3 · Naive Coder（无协议循环）</h2>
+    <p>Prompt-only Agent 的典型输出：字段名漂移、格式错误、敏感信息明文打 log。编译通过，语义全错。</p>
+    ${codeBlock(c.naive.file, c.naive.errors, 'badge-bad', c.naive.lines)}
+  </div>
+
+  <div class="panel" data-panel="4">
+    <h2>Step 4 · Protocol Coder + Gate（注入后仍要绷紧）</h2>
+    <p>读了 bundle 后命名收敛到 canonical id，但值与策略仍错。Gate 产出结构化 feedback，驱动 retry。</p>
+    <div class="grid-2">
+      ${codeBlock(c.draft.file, c.draft.errors, 'badge-bad', c.draft.lines)}
+      <div class="feedback" id="draft-feedback">${esc(c.draft.feedback)}</div>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="5">
+    <h2>Step 5 · Retry 收敛</h2>
+    <p>Coder 读 feedback 修正格式与脱敏策略。<code>verify_usage</code> 第二次 pass。</p>
+    ${codeBlock(c.fixed.file, c.fixed.status, 'badge-ok', c.fixed.lines)}
+  </div>
+
+  <div class="panel" data-panel="6">
+    <h2>Step 6 · 碰撞测试结论</h2>
+    <p>同一任务、同一代码形态。差别在于 Harness 是否跑 bind + derived + verify 闭环。<span id="live-badge" style="font-size:12px;color:var(--text-muted)"></span></p>
+    <div class="summary">
+      <div class="sum-card bad">
+        <div class="sum-num" id="metric-naive">${c.naiveErrors}</div>
+        <div class="sum-label">Prompt-only · shipped 语义错误</div>
+      </div>
+      <div class="sum-card good">
+        <div class="sum-num" id="metric-fixed">0</div>
+        <div class="sum-label">SemanticAnchor · 1 次 retry 后收敛</div>
+      </div>
+    </div>
+    <div class="cmd">${esc(c.cmd)}</div>
+  </div>`;
+}
+
+function applyLiveData(c, data) {
+  if (!data) return;
+  const bindDeclared = document.getElementById('bind-declared');
+  if (bindDeclared) {
+    bindDeclared.innerHTML = jsonBlock('bind_constraints (declared only)', {
+      stats: data.bindDeclared.stats,
+      inject: data.bindDeclared.injection,
+      bundle: data.bindDeclared.bundle,
+    });
+  }
+  const derivedUnits = document.getElementById('derived-units');
+  if (derivedUnits) derivedUnits.innerHTML = jsonBlock('deriveFromTypescript()', data.derivedUnits);
+  const bindDerived = document.getElementById('bind-derived');
+  if (bindDerived) {
+    bindDerived.innerHTML = jsonBlock('bind_constraints (+ derived)', {
+      stats: data.bindWithDerived.stats,
+      inject: data.bindWithDerived.injection,
+      bundle: data.bindWithDerived.bundle,
+    });
+  }
+  const draftFb = document.getElementById('draft-feedback');
+  if (draftFb && data.verify?.draft?.feedback) draftFb.textContent = data.verify.draft.feedback;
+  const mNaive = document.getElementById('metric-naive');
+  if (mNaive) mNaive.textContent = data.metrics.naiveErrors;
+  const mFixed = document.getElementById('metric-fixed');
+  if (mFixed) mFixed.textContent = data.metrics.fixedErrors;
+  const badge = document.getElementById('live-badge');
+  if (badge) badge.textContent = ' · live metrics from /api/walkthrough/' + data.caseId;
+  document.querySelectorAll('.case-tab-metric').forEach((el, i) => {
+    const id = Object.keys(CASES)[i];
+    if (id === data.caseId) {
+      el.innerHTML = `<span class="bad">${data.metrics.naiveErrors}</span> → <span class="good">${data.metrics.fixedErrors}</span>`;
+    }
+  });
+}
+
+async function fetchLive(caseId) {
+  try {
+    const res = await fetch('/api/walkthrough/' + caseId);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function renderCaseTabs(active) {
+  return Object.entries(CASES).map(([id, c]) => `
+    <button class="case-tab${id === active ? ' active' : ''}" data-case="${id}" type="button">
+      <div class="case-tab-label">${esc(c.label)}</div>
+      <div class="case-tab-title">${esc(c.title.split('·')[1]?.trim() || c.title)}</div>
+      <div class="case-tab-desc">${esc(c.lead.slice(0, 48))}…</div>
+      <div class="case-tab-metric"><span class="bad">${c.naiveErrors}</span> → <span class="good">0</span></div>
+    </button>`).join('');
+}
+
+let currentCase = new URLSearchParams(location.search).get('case') || 'quant';
+if (!CASES[currentCase]) currentCase = 'quant';
+
+let currentStep = new URLSearchParams(location.search).get('step') || '0';
+
+function setCase(id, step) {
+  currentCase = id;
+  const c = CASES[id];
+  document.getElementById('hero-title').textContent = c.title;
+  document.getElementById('hero-lead').textContent = c.lead;
+  document.getElementById('hero-task').innerHTML = `<strong>PM 任务：</strong>${esc(c.task.replace(/^PM 任务：/, ''))}`;
+  document.getElementById('case-tabs').innerHTML = renderCaseTabs(id);
+  document.getElementById('panels').innerHTML = renderPanels(c);
+  setStep(step ?? currentStep);
+  fetchLive(id).then((data) => applyLiveData(c, data));
+  const url = new URL(location.href);
+  url.searchParams.set('case', id);
+  url.searchParams.set('step', currentStep);
+  history.replaceState(null, '', url);
+}
+
+function setStep(id) {
+  currentStep = String(id);
+  document.querySelectorAll('.step-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.step === currentStep));
+  document.querySelectorAll('.panel').forEach(p =>
+    p.classList.toggle('active', p.dataset.panel === currentStep));
+  const url = new URL(location.href);
+  url.searchParams.set('step', currentStep);
+  history.replaceState(null, '', url);
+}
+
+document.getElementById('case-tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.case-tab');
+  if (!tab) return;
+  setCase(tab.dataset.case, '0');
+});
+
+document.getElementById('steps').addEventListener('click', (e) => {
+  const btn = e.target.closest('.step-btn');
+  if (!btn) return;
+  setStep(btn.dataset.step);
+});
+
+setCase(currentCase, currentStep);
+</script>
+</body>
+</html>

@@ -41,9 +41,12 @@ function bind(store, args = {}) {
   // Emergent/derived units passed in by the caller (e.g. "keep API backward compatible",
   // or a type pulled from the live AST). They join the bundle with their provenance intact.
   for (const u of extra) {
-    if (u && u.id && !seen.has(u.id)) {
-      seen.add(u.id);
-      resolved.push(compact(u));
+    if (u && u.id) {
+      store.register(u);
+      if (!seen.has(u.id)) {
+        seen.add(u.id);
+        resolved.push(compact(u));
+      }
     }
   }
 

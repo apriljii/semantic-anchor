@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>SemanticAnchor 面试备忘 · Private</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text: #0f172a; --text-secondary: #64748b; --text-muted: #94a3b8;
+      --accent: #4d6bfe; --accent-soft: rgba(77,107,254,0.08);
+      --anchor: #1e4d7c; --anchor-soft: rgba(30,77,124,0.08);
+      --border: rgba(15,23,42,0.08); --success: #10b981; --danger: #ef4444;
+      --warn: #f59e0b; --radius: 12px;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --font: 'Inter', system-ui, sans-serif;
+      --sidebar: 220px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+    body { font-family: var(--font); background: #f8fafc; color: var(--text); line-height: 1.65; font-size: 14px; }
+
+    .top {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border); padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .top h1 { font-size: 15px; color: var(--anchor); font-weight: 700; }
+    .badge { font-size: 10px; font-weight: 600; color: var(--warn); background: rgba(245,158,11,0.12); padding: 3px 8px; border-radius: 999px; }
+
+    .layout { display: grid; grid-template-columns: var(--sidebar) 1fr; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 49px); }
+    aside {
+      position: sticky; top: 49px; height: calc(100vh - 49px); overflow-y: auto;
+      padding: 20px 12px 40px 16px; border-right: 1px solid var(--border); background: #fff;
+    }
+    aside a {
+      display: block; font-size: 12px; color: var(--text-secondary); text-decoration: none;
+      padding: 6px 10px; border-radius: 8px; margin-bottom: 2px;
+    }
+    aside a:hover, aside a.active { background: var(--anchor-soft); color: var(--anchor); font-weight: 500; }
+
+    main { padding: 28px 32px 80px; max-width: 780px; }
+    section { margin-bottom: 40px; scroll-margin-top: 64px; }
+    section h2 { font-size: 1.25rem; color: var(--anchor); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    section h3 { font-size: 14px; color: var(--anchor); margin: 18px 0 8px; font-weight: 600; }
+    p, li { color: var(--text-secondary); font-size: 14px; }
+    ul, ol { padding-left: 20px; margin: 8px 0; }
+    li { margin-bottom: 4px; }
+
+    .pitch {
+      background: linear-gradient(135deg, var(--anchor-soft), var(--accent-soft));
+      border: 1px solid rgba(30,77,124,0.15); border-radius: var(--radius);
+      padding: 20px 22px; font-size: 15px; color: var(--anchor); font-weight: 500; line-height: 1.7;
+    }
+    .pitch em { font-style: normal; color: var(--accent); font-weight: 600; }
+
+    .card {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; margin: 12px 0;
+    }
+    .card strong { color: var(--anchor); display: block; margin-bottom: 6px; font-size: 13px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff;
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 12px 0; }
+    th { text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 600; color: var(--anchor); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    code, .mono { font-family: var(--mono); font-size: 12px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: var(--anchor); }
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: var(--radius);
+      font-family: var(--mono); font-size: 11px; line-height: 1.55; overflow-x: auto; margin: 10px 0;
+    }
+    pre .c { color: #64748b; }
+    pre .k { color: #7dd3fc; }
+    pre .s { color: #86efac; }
+
+    details { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); margin: 8px 0; }
+    summary {
+      padding: 12px 16px; cursor: pointer; font-weight: 600; color: var(--anchor); font-size: 13px;
+      list-style: none; display: flex; align-items: center; justify-content: space-between;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: '+'; color: var(--text-muted); font-weight: 400; }
+    details[open] summary::after { content: '−'; }
+    .ans { padding: 0 16px 14px; border-top: 1px solid var(--border); }
+    .ans p { margin-top: 10px; }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { display: none; }
+      main { padding: 20px 16px 60px; }
+      .grid2 { grid-template-columns: 1fr; }
+    }
+
+    .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; margin-right: 4px; }
+    .tag-yes { background: rgba(16,185,129,0.12); color: #059669; }
+    .tag-no { background: rgba(239,68,68,0.08); color: #dc2626; }
+    .tag-warn { background: rgba(245,158,11,0.12); color: #b45309; }
+
+    .demo-cmd { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin: 8px 0; }
+    .demo-cmd code { background: none; padding: 0; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <h1>SemanticAnchor 面试备忘</h1>
+  <span class="badge">PRIVATE · 无入口链接</span>
+</div>
+
+<div class="layout">
+  <aside>
+    <a href="#pitch">30 秒电梯演讲</a>
+    <a href="#formula">核心公式</a>
+    <a href="#problem">问题与命题</a>
+    <a href="#boundary">边界与非目标</a>
+    <a href="#ecosystem">生态分层</a>
+    <a href="#migration">迁移叙事 40/60</a>
+    <a href="#tools">四动词 MCP</a>
+    <a href="#demo">Demo 走读</a>
+    <a href="#qa">高频问答</a>
+    <a href="#hard">刁钻问题</a>
+    <a href="#paths">代码路径</a>
+    <a href="#commands">演示命令</a>
+  </aside>
+
+  <main>
+
+    <!-- 30s pitch -->
+    <section id="pitch">
+      <h2>30 秒电梯演讲</h2>
+      <div class="pitch">
+        AI 写代码时，<em>语法错误</em>编译器会拦，<em>语义错误</em>没人拦——<code>sym</code> 代替 <code>ticker</code>、<code>long</code> 代替 <code>buy</code>、调用不存在的 API，代码能跑但引用是错的。<br><br>
+        <em>SemanticAnchor</em> 是一个引用级约束协议：把命名实体（字段、枚举、符号、签名）锚到可验证契约上，通过 <em>事前注入 + 事后守门 + 结构化 feedback</em> 让 Agent 输出收敛。我们在量化限价报单场景做了碰撞测试：<strong>Prompt-only 7 个语义错误全部交付，加协议闭环后 0 个。</strong><br><br>
+        它不是 Compass 开源版，而是从生产 field-registry 提炼的方法论 + MCP 参考实现；完整 prompt→代码 体验在 Compass + OpenSpec 全栈里，SemanticAnchor 是 Apply 阶段的语义守门子层。
+      </div>
+    </section>
+
+    <!-- formula -->
+    <section id="formula">
+      <h2>核心公式（必背）</h2>
+      <pre><span class="k">语义锚</span> = <span class="s">锚（Canonical ID）</span> + <span class="s">链（Verifiable Contract）</span> + <span class="s">抛锚（Inject）</span> + <span class="s">绷紧（Gate）</span>
+
+  锚          链                    抛锚                  绷紧
+  约束什么    ConstraintUnit        resolve/bind          verify/feedback
+              形状/枚举/策略         best-effort           must-have</pre>
+
+      <div class="grid2">
+        <div class="card"><strong>注入是优化，守门是保证</strong>没有 verify，只有「建议」，不是「锚」。</div>
+        <div class="card"><strong>窄腰原则</strong>只约束「引用」（名、形、值、策略），不约束逻辑、控制流、业务规则。</div>
+      </div>
+
+      <h3>引用谱系 kind</h3>
+      <p><code>field</code> → <code>param</code> → <code>enum</code> → <code>symbol</code> → <code>signature</code> / <code>endpoint</code>（复合用 members[]）</p>
+
+      <h3>provenance 三分法</h3>
+      <table>
+        <tr><th>值</th><th>含义</th><th>例子</th></tr>
+        <tr><td><code>declared</code></td><td>预注册、人工策展</td><td>户口簿、OpenAPI、8维 schema 编译</td></tr>
+        <tr><td><code>derived</code></td><td>从项目空间派生</td><td>TS 签名、LSP、eslint</td></tr>
+        <tr><td><code>emergent</code></td><td>会话累积</td><td>用户中途说「保持向后兼容」</td></tr>
+      </table>
+    </section>
+
+    <!-- problem -->
+    <section id="problem">
+      <h2>问题与核心命题</h2>
+      <h3>三种 Schema 必须分清</h3>
+      <table>
+        <tr><th>名称</th><th>是什么</th><th>本项目</th></tr>
+        <tr><td>协议 Schema</td><td>ConstraintUnit 元结构</td><td><code>spec/constraint-unit.schema.json</code></td></tr>
+        <tr><td>约束实例</td><td>某 ticker/side 的具体标准</td><td><code>constraints.json</code></td></tr>
+        <tr><td>Compass 业务 Schema</td><td>低代码 page/ui/api</td><td>❌ Non-Goal</td></tr>
+      </table>
+
+      <h3>封闭世界 vs 开放世界</h3>
+      <table>
+        <tr><th>维度</th><th>户口簿（封闭）</th><th>SemanticAnchor（开放）</th></tr>
+        <tr><td>输入</td><td>可枚举别名</td><td>无边界 prompt + 任意代码库</td></tr>
+        <tr><td>miss</td><td>异常 → 请补录</td><td>常态 → unresolved，verify 兜底</td></tr>
+        <tr><td>作用点</td><td>输入解析（resolve）</td><td>行动守门（verify）</td></tr>
+        <tr><td>验证真理</td><td>协议自洽（查表即对）</td><td>环境裁决（tsc/测试）</td></tr>
+      </table>
+      <p style="margin-top:10px"><strong>户口簿是 SemanticAnchor 在 declared-only 封闭世界的退化特例，不是天花板。</strong></p>
+    </section>
+
+    <!-- boundary -->
+    <section id="boundary">
+      <h2>边界与非目标（展示判断力）</h2>
+      <div class="grid2">
+        <div class="card">
+          <strong><span class="tag tag-yes">是什么</span></strong>
+          Harness 语义约束子层 · 4 动词协议 · MCP 参考实现 · 工程验证报告（7→0）
+        </div>
+        <div class="card">
+          <strong><span class="tag tag-no">不是什么</span></strong>
+          字段字典 · 低代码 · Compass 开源版 · 完整 coding agent · 规则引擎 · 8维 compile
+        </div>
+      </div>
+
+      <h3>constraints 负面清单</h3>
+      <ul>
+        <li>❌ 业务阈值（金额 ≥ 5 万触发审核）</li>
+        <li>❌ 跨实体规则、时变策略 → 属于 Compass 规则引擎（达层）</li>
+      </ul>
+    </section>
+
+    <!-- ecosystem -->
+    <section id="ecosystem">
+      <h2>生态分层（OpenSpec × 8维 × SA）</h2>
+      <pre><span class="c">OpenSpec          → 变更怎么流（propose → apply → archive）</span>
+<span class="c">8 维 Schema       → 场景契约是什么（schema/ui/api/table/…）</span>
+<span class="c">field-registry 信 → fieldId · synonyms · scene bundle</span>
+<span class="k">SemanticAnchor    → Apply 时生成物引用别漂（bind → verify）</span>
+<span class="c">环境裁决          → tsc / LSP / pytest / E2E</span></pre>
+
+      <p><strong>一句话：</strong>OpenSpec 让 spec 持久且可审；SemanticAnchor 让 Agent 写代码时守 spec 的「引用面」。应串联，不重复。</p>
+
+      <h3>8 维 → SemanticAnchor 映射</h3>
+      <table>
+        <tr><th>8 维</th><th>关系</th></tr>
+        <tr><td><code>schema.json</code></td><td>强相关 → field/param/enum</td></tr>
+        <tr><td><code>api.json</code></td><td>部分 → endpoint/signature</td></tr>
+        <tr><td><code>model/table/query</code></td><td>derived 源，不复制整维</td></tr>
+        <tr><td><code>ui.json</code> / <code>rule.json</code> / <code>event.json</code></td><td>不包含</td></tr>
+      </table>
+
+      <h3>信达雅</h3>
+      <table>
+        <tr><th>层</th><th>与 SA 关系</th></tr>
+        <tr><td>信 · field-registry</td><td>提炼 declared + resolve → 协议</td></tr>
+        <tr><td>达 · rule-engine</td><td>❌ 不迁移</td></tr>
+        <tr><td>雅 · PRD2Code / 8维 compile</td><td>❌ 不迁移；OpenSpec 交付面</td></tr>
+      </table>
+    </section>
+
+    <!-- migration -->
+    <section id="migration">
+      <h2>迁移叙事（40/60 · 面试金句）</h2>
+      <div class="pitch" style="font-size:14px">
+        「Compass field-registry 是 SemanticAnchor 在封闭世界、金融域的生产实现；SemanticAnchor 是把『命名实体引用 + 可验证契约 + 注入守门闭环』提炼成领域无关的参考协议。<br><br>
+        户口簿解决的是<strong>『别名能不能对上』</strong>；SemanticAnchor 解决的是<strong>『Agent 生成物有没有越界』</strong>——后者需要 verify 和环境裁决，这是迁移里 60% 的新工程。」
+      </div>
+
+      <h3>关键映射</h3>
+      <table>
+        <tr><th>户口簿</th><th>SemanticAnchor</th><th>变化</th></tr>
+        <tr><td><code>inherentRules</code></td><td><code>constraints</code></td><td>领域无关形状；剔除业务阈值</td></tr>
+        <tr><td><code>synonyms</code></td><td><code>aliases</code> + <code>resolve()</code></td><td>miss → unresolved，不编造</td></tr>
+        <tr><td><code>get_scene_bundle</code></td><td><code>bind_constraints</code></td><td>场景 bundle → 任务实体 bundle</td></tr>
+        <tr><td>（无）</td><td><code>verify_usage</code></td><td><strong>新建</strong>，户口簿无对应物</td></tr>
+        <tr><td>16 MCP 工具</td><td>4 MCP 工具</td><td>协议最小化</td></tr>
+      </table>
+    </section>
+
+    <!-- tools -->
+    <section id="tools">
+      <h2>四动词 MCP 映射</h2>
+      <table>
+        <tr><th>工具</th><th>构成</th><th>性质</th><th>职责</th></tr>
+        <tr><td><code>resolve</code></td><td>锚 · 解析</td><td>best-effort</td><td>别名 → 规范 id；miss 不编造</td></tr>
+        <tr><td><code>get_constraint</code></td><td>链 · 读契约</td><td>查询</td><td>返回 ConstraintUnit</td></tr>
+        <tr><td><code>bind_constraints</code></td><td>抛锚 · Inject</td><td>best-effort</td><td>打包 bundle；Planner→Coder handoff</td></tr>
+        <tr><td><code>verify_usage</code></td><td>绷紧 · Gate</td><td><strong>must-have</strong></td><td>契约 + 环境裁决 → feedback</td></tr>
+      </table>
+
+      <h3>severity 三种</h3>
+      <table>
+        <tr><th>severity</th><th>含义</th><th>处理</th></tr>
+        <tr><td><code>violation</code></td><td>违反契约（枚举/格式/敏感）</td><td>必须修</td></tr>
+        <tr><td><code>drift</code></td><td>有规范 id 却用非规范名</td><td>应修</td></tr>
+        <tr><td><code>unverifiable</code></td><td>无约束锚定</td><td>报告，不硬失败</td></tr>
+      </table>
+
+      <h3>Agent loop 两卡口</h3>
+      <pre><span class="c">① 任务开始</span>  bind_constraints({ aliases })  → bundle 注入 context
+<span class="c">② 生成代码后</span> verify_usage({ usages })       → 失败则 feedback → retry
+<span class="c">③ 通过后</span>      才写文件 / commit</pre>
+    </section>
+
+    <!-- demo -->
+    <section id="demo">
+      <h2>Demo 走读（限价报单 · 必会讲）</h2>
+      <p>任务：<em>Implement a limit buy order for AAPL @ 178.50: ticker, order side, quantity, account.</em></p>
+
+      <table>
+        <tr><th>产物</th><th>说明</th><th>错误数</th></tr>
+        <tr><td><code>naive.ts</code></td><td>Prompt-only：sym/long/aapl/明文 log</td><td>7 shipped</td></tr>
+        <tr><td><code>draft.ts</code></td><td>注入后命名对了，值/策略仍错</td><td>3 violations</td></tr>
+        <tr><td><code>fixed.ts</code></td><td>Gate feedback + 1 retry</td><td><strong>0</strong></td></tr>
+      </table>
+
+      <h3>Prompt-only 典型错误</h3>
+      <ul>
+        <li><code>sym = 'aapl'</code> → drift + pattern violation（应 ticker + 大写）</li>
+        <li><code>side = 'long'</code> → drift + enum violation（应 buy/sell）</li>
+        <li><code>qty</code> → drift（应 quantity）</li>
+        <li><code>account</code> 明文 → drift + sensitive violation</li>
+      </ul>
+
+      <h3>诚实边界（加分项）</h3>
+      <p>Demo 用<strong>预定义 usages</strong> 代替 AST 提取，保证无 API Key、100% 可复现。生产 Harness 中，同结构输入来自静态分析或 Agent field manifest。</p>
+    </section>
+
+    <!-- Q&A -->
+    <section id="qa">
+      <h2>高频问答</h2>
+
+      <details>
+        <summary>和 LSP / TypeScript 什么关系？</summary>
+        <div class="ans">
+          <p>LSP/tsc 是 verify 的<strong>环境裁决来源之一</strong>，不是替代品。SemanticAnchor 额外覆盖契约级语义：枚举合法值、pattern、敏感策略、symbol 存在性——编译器不管 <code>sym</code> vs <code>ticker</code> 的 drift。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>和 OpenSpec / Spec-Driven 什么关系？</summary>
+        <div class="ans">
+          <p>OpenSpec 管变更怎么流、测什么（Apply 之前 + E2E）；SemanticAnchor 管 Apply 时生成物引用别漂。嵌在 <code>/opsx:apply</code> 执行路径里，是子层不是竞品。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>为什么不把 8 维 compile 做进 SemanticAnchor？</summary>
+        <div class="ans">
+          <p>8 维是 Compass「雅」层 + OpenSpec 交付面，属于低代码场景全栈契约。SemanticAnchor 只消费其中「引用级」切片（schema.json + api.json），通过 adapter 派生 ConstraintUnit，不复制 8 维文件。扩边界会破坏窄腰和开源定位。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>多 Agent 为什么需要 bundle？</summary>
+        <div class="ans">
+          <p>Planner 解析到的 ticker/order_side 契约，若无标准 bundle handoff，Coder 退回 prompt 软约束 → 语义漂移重现。bind_constraints 输出是 Planner→Coder 的标准契约载体。碰撞测试：<code>examples/multi-agent/demo.js</code>。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>MCP 和 Library 嵌入怎么选？</summary>
+        <div class="ans">
+          <p><strong>MCP</strong>：已有 MCP 宿主（Cursor/Claude Desktop），快速试验，Agent 自主调工具。<br>
+          <strong>Library</strong>：自研 Harness/CI，要强控 gate 时机和 retry，用 <code>semantic-gate</code> 中间件。<br>
+          <strong>生产常见</strong>：混合——Harness 内 enforce，MCP 供 IDE 联调。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>verify 的 usages 从哪来？</summary>
+        <div class="ans">
+          <p>生产三条路：AST/LSP 从生成物解析；Agent 输出结构化 field manifest；Hybrid（模型 draft + AST 校正）。协议只定义 usages 结构，不做语言级 parser。</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- hard questions -->
+    <section id="hard">
+      <h2>刁钻问题（基于真实讨论）</h2>
+
+      <details open>
+        <summary>「用户要装很多 npm 包才能串起来，不像完整方案？」</summary>
+        <div class="ans">
+          <p><strong>承认感受，澄清定位。</strong></p>
+          <p>SemanticAnchor 本身依赖极少（MCP SDK），琐碎感来自<strong>故意不做完整产品</strong>——它是 Harness 内的语义守门芯片，不是 prompt→代码 全家桶。</p>
+          <p>完整体验应在 <strong>Compass Apply</strong> 里收口：OpenSpec 驱动变更 → 8维+户口簿 compile → 内嵌 semantic-gate → E2E。用户跑 <code>/opsx:apply</code>，零感知 SemanticAnchor。</p>
+          <p>开源 repo 定位是<strong>工程验证报告</strong>（证明 7→0），给 Harness 工程师参考协议，不是给业务用户装的 App。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>「只有一个 schema 契约，流程串不起来？」</summary>
+        <div class="ans">
+          <p>ConstraintUnit schema 只是四块公式里的「链」。串流程缺的是<strong>桥接层</strong>（8维→constraints、prompt→aliases、代码→usages），应在 Compass 私有栈建，不应膨胀 SA 协议。</p>
+          <p>分层：上游产约束 → SA 守门 → 环境裁决。SA 管 Apply 中/后的引用面，不管 propose/compile。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>「为什么从 16 个工具减到 4 个？」</summary>
+        <div class="ans">
+          <p>16 个是 Compass 产品面（search_fields、suggest_field、compile_schema…）。开源协议遵循<strong>最小化</strong>：4 个动词完整覆盖 锚+链+Inject+Gate 闭环。其余能力要么合并（check_sensitive→verify），要么 Non-Goal（低代码 compile）。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>「开放世界 miss 了怎么办？」</summary>
+        <div class="ans">
+          <p>miss 是常态，不是错误。resolve 返回 <code>unresolved</code> + 候选，<strong>不编造</strong>。unverifiable 报告但不硬失败。真正可靠的是 verify + 环境裁决兜底，不是提高 resolve 命中率。</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- paths -->
+    <section id="paths">
+      <h2>代码路径（技术面深挖）</h2>
+      <table>
+        <tr><th>路径</th><th>职责</th></tr>
+        <tr><td><code>spec/constraint-unit.schema.json</code></td><td>协议 Schema</td></tr>
+        <tr><td><code>src/dispatch.js</code></td><td>单一事实来源（server + demo 共用）</td></tr>
+        <tr><td><code>src/protocol/resolve.js</code></td><td>别名解析</td></tr>
+        <tr><td><code>src/protocol/bind.js</code></td><td>bundle 打包 + 注入位指引</td></tr>
+        <tr><td><code>src/protocol/verify.js</code></td><td>守门 + feedback</td></tr>
+        <tr><td><code>src/protocol/constraint-store.js</code></td><td>约束存储 + load</td></tr>
+        <tr><td><code>src/adapters/tsc-environment.js</code></td><td>环境裁决 adapter</td></tr>
+        <tr><td><code>examples/harness-hook/semantic-gate.js</code></td><td>Harness 中间件（bind + enforce）</td></tr>
+        <tr><td><code>examples/derived/scan-typescript.js</code></td><td>TS → derived ConstraintUnit 示例</td></tr>
+        <tr><td><code>examples/multi-agent/demo.js</code></td><td>碰撞测试 7→0</td></tr>
+        <tr><td><code>examples/quant/limit-buy/artifacts/</code></td><td>naive / draft / fixed 走读产物</td></tr>
+      </table>
+    </section>
+
+    <!-- commands -->
+    <section id="commands">
+      <h2>演示命令（面试前跑一遍）</h2>
+      <div class="demo-cmd"><code>npm run demo:walkthrough</code> — 分步 narrated，推荐先讲这个</div>
+      <div class="demo-cmd"><code>npm run demo</code> — 快速 metrics：7 vs 0</div>
+      <div class="demo-cmd"><code>npm run demo:harness</code> — Library 嵌入：bind → enforce → retry</div>
+      <div class="demo-cmd"><code>npm run demo:derived</code> — declared + derived + gate</div>
+      <div class="demo-cmd"><code>npm run validate:spec</code> — ConstraintUnit schema 校验</div>
+      <div class="demo-cmd"><code>npm test</code> — 协议单测</div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const links = document.querySelectorAll('aside a');
+  const sections = [...links].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

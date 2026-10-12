@@ -1,0 +1,8 @@
+{
+  "_comment": "Canonical SemanticAnchor MCP server block. Copy fields into your host's config schema.",
+  "command": "node",
+  "args": ["src/server.js"],
+  "env": {
+    "SA_CONSTRAINTS": "examples/quant/constraints.json"
+  }
+}
